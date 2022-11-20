@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources\Api\Dashboard\Tender;
 
+use App\Http\Resources\Api\Dashboard\Category\CategoryResource;
+use App\Http\Resources\Api\Dashboard\User\SimpleUserResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class TenderResource extends JsonResource
@@ -18,19 +20,18 @@ class TenderResource extends JsonResource
             'id'                          => (int) $this->id,
             'title'                       => (string) $this->title,
             'desc'                        => (string) $this->desc,
-            'user_id'                     => (int) $this->user_id.
-            'user_name'                   => (string) optional($this->user)->name,
-            'phone'                       => (string) optional($this->user)->phone,
-            'categories'                  => $this->categories,
+            'user'                        => $this->user ? new SimpleUserResource($this->user) : null,
+            'company_name'                => (string) $this->company_name,
+            'categories'                  => CategoryResource::collection($this->categories),
             'tender_images'               => TenderMediaResource::collection($this->tender_images),
             'tender_other_files'          => TenderMediaResource::collection($this->tender_other_files),
-            'status'                      => (bool) $this->status,
             'expiry_date'                 => $this->expiry_date ? $this->expiry_date->format('Y-m-d') : null,
             'is_expired'                  => $this->expiry_date ? $this->expiry_date <= now() : false,
             'insurance_value'             => (double) $this->insurance_value,
-            'created_at'                  => $this->created_at ? $this->created_at->format('Y-m-d') : null,
             'tender_specifications_value' => (double) $this->tender_specifications_value,
             'tender_specifications_file'  => $this->tender_specifications_file ? new TenderMediaResource($this->tender_specifications_file) : null,
+            'tender_offers'               => TenderOfferResource::collection($this->offers),
+            'created_at'                  => $this->created_at ? $this->created_at->format('Y-m-d') : null,
         ];
     }
 }

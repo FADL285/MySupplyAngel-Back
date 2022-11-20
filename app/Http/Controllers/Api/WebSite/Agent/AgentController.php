@@ -7,10 +7,13 @@ use App\Http\Requests\Api\WebSite\Agent\AgentRequest;
 use App\Http\Resources\Api\WebSite\Agent\AgentResource;
 use App\Models\Agent;
 use App\Models\AgentFavorite;
+use App\Models\User;
+use App\Notifications\Website\Agent\AgentNotification;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Notification;
 
 class AgentController extends Controller
 {
@@ -21,7 +24,11 @@ class AgentController extends Controller
      */
     public function index(Request $request)
     {
-        $agents = Agent::when($request->keyword, function($query) use($request){
+        $agents = Agent::when($request->type, function ($query) use($request) {
+            $query->where('type', $request->type);
+        })->when(! isset($request->type), function ($query) use($request) {
+            $query->where('type', 'required_agent_or_distrebutor');
+        })->when($request->keyword, function($query) use($request){
             $query->where('name', 'LIKE', '%'.$request->keyword.'%')
             ->orWhere('desc', 'LIKE', '%'.$request->keyword.'%');
         })->when($request->category_id, function ($query) use ($request) {
@@ -46,8 +53,19 @@ class AgentController extends Controller
      */
     public function myAgents(Request $request)
     {
-        $agents = Agent::where('user_id', auth('api')->id())
-        ->when($request->keyword, function($query) use($request){
+        $agents = Agent::when($request->filter == 'my_agents', function ($query) {
+            $query->where('user_id', auth('api')->id());
+        })->when($request->filter == 'my_offers', function ($query) {
+            $query->whereHas('offers', function ($query) {
+                $query->where('user_id', auth('api')->id());
+            });
+        })->when($request->filter == 'all', function ($query) {
+            $query->where('user_id', auth('api')->id())->orWhereHas('offers', function ($query) {
+                $query->where('user_id', auth('api')->id());
+            });
+        })->when(! in_array($request->filter, ['my_agents', 'my_offers', 'all']), function ($query) {
+            $query->where('user_id', auth('api')->id());
+        })->when($request->keyword, function($query) use($request){
             $query->where('name', 'LIKE', '%'.$request->keyword.'%')
             ->orWhere('desc', 'LIKE', '%'.$request->keyword.'%');
         })->when($request->category_id, function ($query) use ($request) {
@@ -77,11 +95,13 @@ class AgentController extends Controller
         try {
             $agent = Agent::create($request->safe()->except('category_ids') + ['user_id' => auth('api')->id(), 'status' => 'pending']);
             $agent->categories()->attach($request->validated('category_ids'));
+            $admins = User::whereIn('user_type', ['admin', 'superadmin'])->get();
+            Notification::send($admins, new AgentNotification($agent->id, 'new_agent', ['database', 'broadcast']));
             DB::commit();
-            return response()->json(['status' => true, 'data' => null, 'message' => trans('dashboard.create.successfully')]);
+            return response()->json(['status' => true, 'data' => null, 'message' => trans('website.create.successfully')]);
         } catch (Exception $e) {
             DB::rollBack();
-            return response()->json(['status' => false, 'data' => null, 'messages' => trans('dashboard.create.fail')], 422);
+            return response()->json(['status' => false, 'data' => null, 'messages' => trans('website.create.fail')], 422);
         }
     }
 
@@ -112,11 +132,11 @@ class AgentController extends Controller
             $agent->update($request->safe()->except('category_ids'));
             $agent->categories()->sync($request->category_ids);
             DB::commit();
-            return response()->json(['status' => true, 'data' => null, 'message' => trans('dashboard.update.successfully')]);
+            return response()->json(['status' => true, 'data' => null, 'message' => trans('website.update.successfully')]);
         } catch (Exception $e) {
             DB::rollBack();
-            dd($e);
-            return response()->json(['status' => false, 'data' => null, 'messages' => trans('dashboard.update.fail')], 422);
+            info($e->getMessage());
+            return response()->json(['status' => false, 'data' => null, 'messages' => trans('website.update.fail')], 422);
         }
     }
 
@@ -130,9 +150,9 @@ class AgentController extends Controller
     {
         $agent = Agent::where('user_id', auth('api')->id())->findOrFail($id);
         if ($agent->delete()) {
-            return response()->json(['status' => true, 'data' => null, 'messages' => trans('dashboard.delete.successfully')]);
+            return response()->json(['status' => true, 'data' => null, 'messages' => trans('website.delete.successfully')]);
         }
-        return response()->json(['status' => false, 'data' => null, 'messages' => trans('dashboard.delete.fail')], 422);
+        return response()->json(['status' => false, 'data' => null, 'messages' => trans('website.delete.fail')], 422);
     }
 
     public function deleteAgentMedia($agent, $media)
@@ -143,7 +163,7 @@ class AgentController extends Controller
         if (file_exists(storage_path('app/public/images/'.$media->media))){
             File::delete(storage_path('app/public/images/'.$media->media));
         }
-        return response()->json(['status' => true, 'data' => null, 'messages' => trans('dashboard.delete.successfully')]);
+        return response()->json(['status' => true, 'data' => null, 'messages' => trans('website.delete.successfully')]);
     }
 
     public function toggelToFavorite($id)
@@ -153,7 +173,7 @@ class AgentController extends Controller
         $agent_favorite = AgentFavorite::where(['user_id' => $user_id, 'agent_id' => $agent->id])->first();
         $agent_favorite ? $agent_favorite->delete() : AgentFavorite::create(['user_id' => $user_id, 'agent_id' => $agent->id]);
 
-        return response()->json(['status' => true, 'data' => ['is_favorite' => $agent_favorite ? false : true], 'messages' => trans('dashboard.create.successfully')]);
+        return response()->json(['status' => true, 'data' => ['is_favorite' => $agent_favorite ? false : true], 'messages' => trans('website.create.successfully')]);
     }
 
     public function favorite(Request $request)
@@ -166,7 +186,7 @@ class AgentController extends Controller
             $query->whereHas('categories', function ($query) use ($request) {
                 $query->where('id', $request->category_id);
             });
-        })->latest()->get();
+        })->latest()->paginate();
 
         return AgentResource::collection($agents_favorite)->additional(['status' => true, 'message' => '']);
     }

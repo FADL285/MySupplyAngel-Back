@@ -15,8 +15,8 @@ class SelectClientResource extends JsonResource
     public function toArray($request)
     {
         return [
-            'id'       => (int) $this->id,
-            'fullname' => (string) $this->fullname,
+            'id'   => (int) $this->id,
+            'name' => (string) $this->name,
         ];
     }
 }

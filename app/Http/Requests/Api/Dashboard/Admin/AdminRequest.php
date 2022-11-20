@@ -33,7 +33,7 @@ class AdminRequest extends FormRequest
         $country_id = $this->country_id ?? optional($admin->country)->id;
 
         return [
-            'fullname'      => $status . '|string|max:45',
+            'name'          => $status . '|string|max:45',
             'avatar'        => $status . '|file',
             'phone_code'    => $status . '|exists:countries,phone_code',
             'phone'         => [$status, Rule::unique('users')->ignore($admin)->where(fn ($query) => $query->whereNull('deleted_at'))],

@@ -58,6 +58,7 @@ class ClientController extends Controller
             return ClientResource::make($client->fresh())->additional(['status' => true, 'message' => trans('dashboard.create.success')]);
         } catch (Exception $e) {
             DB::rollBack();
+            info($e->getMessage());
             return response()->json(['status' => false, 'data' => null, 'messages' => trans('dashboard.create.fail')], 422);
         }
     }
@@ -93,6 +94,7 @@ class ClientController extends Controller
             return ClientResource::make($client->fresh())->additional(['status' => true, 'message' => trans('dashboard/api.update.success')]);
         } catch (Exception $e) {
             DB::rollBack();
+            info($e->getMessage());
             return response()->json(['status' => false, 'data' => null, 'messages' => trans('dashboard/api.update.fail')], 422);
         }
     }

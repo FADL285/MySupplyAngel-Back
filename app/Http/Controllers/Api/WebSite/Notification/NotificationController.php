@@ -27,7 +27,7 @@ class NotificationController extends Controller
     {
         $notification = auth('api')->user()->notifications()->findOrFail($id);
         $notification->delete();
-        return response()->json(['status' => true, 'data' => null, 'message' => trans('api.messages.deleted_successfully')]);
+        return response()->json(['status' => true, 'data' => null, 'message' => trans('website.delete.successfully')]);
     }
 
     public function deleteAllNotifications()
@@ -37,7 +37,7 @@ class NotificationController extends Controller
         if (count($notifications) > 0)
         {
             $notifications->delete();
-            return response(['status' => true, 'message' => trans('api.messages.deleted_successfully'), 'data' => null], 200);
+            return response(['status' => true, 'message' => trans('website.delete.successfully'), 'data' => null], 200);
         }
         return response(['status' => false, 'message' => trans('لا توجد بيانات'), 'data' => null], 422);
     }

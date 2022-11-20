@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Requests\Api\Dashboard\Agent;
+namespace App\Http\Requests\Api\Dashboard\ChangeStatus;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class AgentChangeStatusRequest extends FormRequest
+class ChangeStatusRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -15,7 +15,7 @@ class AgentChangeStatusRequest extends FormRequest
      */
     public function authorize()
     {
-        return true;
+        return false;
     }
 
     /**

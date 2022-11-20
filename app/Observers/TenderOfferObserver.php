@@ -31,7 +31,7 @@ class TenderOfferObserver
     public function deleted(TenderOffer $tender_offer)
     {
         if ($tender_offer->media()->exists()) {
-            $medias = AppMedia::where(['app_mediaable_type' => 'App\Models\Tender', 'app_mediaable_id' => $tender_offer->id])->get();
+            $medias = AppMedia::where(['app_mediaable_type' => 'App\Models\TenderOffer', 'app_mediaable_id' => $tender_offer->id])->get();
             foreach ($medias as $media)
             {
                 if (file_exists(storage_path('app/public/images/'.$media->media))){

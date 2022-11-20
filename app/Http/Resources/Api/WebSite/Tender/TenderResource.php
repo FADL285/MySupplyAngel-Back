@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Api\WebSite\Tender;
 
+use App\Http\Resources\Api\WebSite\Category\CategoryResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class TenderResource extends JsonResource
@@ -23,12 +24,13 @@ class TenderResource extends JsonResource
             'id'                          => (int) $this->id,
             'title'                       => (string) $this->title,
             'desc'                        => (string) $this->desc,
+            'company_name'                => (string) $this->company_name,
             'user_name'                   => (string) optional($this->user)->name,
             'phone'                       => (string) optional($this->user)->phone,
-            'categories'                  => $this->categories,
+            'categories'                  => CategoryResource::collection($this->categories),
             'tender_images'               => TenderMediaResource::collection($this->tender_images),
             'tender_other_files'          => TenderMediaResource::collection($this->tender_other_files),
-            'is_favorite'                 => auth('api')->check() && auth('api')->user()->tendersFavorite()->where('id', '=', $this->id)->first() ? true : false,
+            'is_favorite'                 => auth('api')->check() && auth('api')->user()->tendersFavorite()->where('tender_id', $this->id)->first() ? true : false,
             'expiry_date'                 => $this->expiry_date ? $this->expiry_date->format('Y-m-d') : null,
             'is_expired'                  => $this->expiry_date ? $this->expiry_date <= now() : false,
             'insurance_value'             => (double) $this->insurance_value,

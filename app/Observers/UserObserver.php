@@ -12,7 +12,7 @@ class UserObserver
     {
         if (request()->hasFile('avatar')) {
             if ($user->media()->exists()) {
-                $avatar = AppMedia::where(['app_mediaable_type' => 'App\Models\User', 'app_mediaable_id' => $user->id , 'media_type' => 'image', 'options' => 'avatar'])->first();
+                $avatar = AppMedia::where(['app_mediaable_type' => 'App\Models\User', 'app_mediaable_id' => $user->id , 'media_type' => 'image', 'option' => 'avatar'])->first();
 
                 if (file_exists(storage_path('app/public/images/'.$avatar->media))){
                     File::delete(storage_path('app/public/images/'.$avatar->media));
@@ -21,8 +21,8 @@ class UserObserver
                 $avatar->delete();
             }
 
-            $avatar = request()->file('image')->store('/users', 'uploads');
-            $user->media()->create(['media' => $avatar, 'media_type' => 'image', 'options' => 'avatar']);
+            $avatar = request()->file('avatar')->store('/users', 'uploads');
+            $user->media()->create(['media' => $avatar, 'media_type' => 'image', 'option' => 'avatar']);
         }
     }
 

@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Requests\Api\WebSite\Profile;
+namespace App\Http\Requests\Api\Dashboard\Profile;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Hash;
 
-class EditPasswordRequest extends FormRequest
+class UpdatePasswordRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -27,12 +27,12 @@ class EditPasswordRequest extends FormRequest
     public function rules()
     {
         return [
-            'password'         => 'required|min:6|confirmed',
-            'current_password' => ['required', function($attribute, $value, $fail) {
-                if (! Hash::check($value, auth('api')->user()->password )) {
-                    return $fail(trans('website.error.the_current_password_not_correct'));
+            'old_password' => ['required', 'min:6', function ($attribute, $value, $fail) {
+                if (! Hash::check($value, auth('api')->user()->password)) {
+                    $fail(trans('dashboard.profile.old_password_is_not_correct'));
                 }
             }],
+            'password' => 'required|min:6|confirmed',
         ];
     }
 

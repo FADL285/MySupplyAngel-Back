@@ -9,7 +9,9 @@ use App\Http\Resources\Api\WebSite\Employee\SimpleEmployeeResource;
 use App\Http\Resources\Api\WebSite\Job\JobResource;
 use App\Models\Job;
 use App\Models\User;
+use App\Notifications\Website\Job\JobNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 
 class JobController extends Controller
 {
@@ -62,10 +64,16 @@ class JobController extends Controller
         if(auth('api')->check())
         {
             $user = auth('api')->user();
+
+            if (! $user->previous_work)
+            {
+                return response()->json(['status' => false, 'data' => ['previous_work' => null], 'message' => trans('website.user.you_must_have_previous_work')], 422);
+            }
+
             $user->update(['is_need_job' => ! $user->is_need_job]);
             return response()->json(['status' => true, 'data' => ['is_need_job' => $user->fresh()->is_need_job], 'message' => trans('website.update.successfully')]);
         }
-        return response()->json(['status' => false, 'data' => null, 'messages' => trans('dashboard.update.fail')], 422);
+        return response()->json(['status' => false, 'data' => null, 'messages' => trans('website.update.fail')], 422);
     }
 
     /**
@@ -76,7 +84,9 @@ class JobController extends Controller
      */
     public function store(JobRequest $request)
     {
-        $job = Job::create($request->validated() + ['user_id' => auth('api')->id()]);
+        $job = Job::create($request->validated() + ['user_id' => auth('api')->id(), 'status' => 'pending']);
+        $admins = User::whereIn('user_type', ['admin', 'superadmin'])->get();
+        Notification::send($admins, new JobNotification($job->id, 'new_job', ['database', 'broadcast']));
         return response()->json(['status' => true, 'data' => null, 'message' => trans('website.create.successfully')]);
     }
 
@@ -95,7 +105,15 @@ class JobController extends Controller
 
     public function myJobs(Request $request)
     {
-        $jobs = Job::where('user_id', auth('api')->id())->when($request->country_id, function ($query) use ($request) {
+        $jobs = Job::when($request->filter == 'my_jobs', function ($query) {
+            $query->where('user_id', auth('api')->id());
+        })->when($request->filter == 'my_applay_on', function ($query) {
+            $query->whereHas('users', function ($query) {
+                $query->where('id', auth('api')->id());
+            });
+        })->when(! in_array($request->filter, ['my_jobs', 'my_applay_on']), function ($query) {
+            $query->where('user_id', auth('api')->id());
+        })->when($request->country_id, function ($query) use ($request) {
             $query->where('country_id', $request->country_id);
         })->when($request->city_id, function ($query) use ($request) {
             $query->where('city_id', $request->city_id);
@@ -130,12 +148,13 @@ class JobController extends Controller
     {
         $job  = Job::where('status', 'admin_accept')->findOrFail($id);
 
-        if (auth('api')->check())
+        if (auth('api')->check() && ($job->expiry_date == null or $job->expiry_date > now()))
         {
-            $job->users()->create(['user_id' => auth('api')->id()]);
+            $job->users()->syncWithoutDetaching(['user_id' => auth('api')->id()]);
+            Notification::send($job->user, new JobNotification($job->id, 'applay_on', ['database', 'broadcast']));
+            return response()->json(['status' => true, 'data' => null, 'message' => trans('website.create.successfully')]);
         }
-
-        return response()->json(['status' => true, 'data' => null, 'message' => '']);
+        return response()->json(['status' => true, 'data' => null, 'message' => trans('website.create.fail')]);
     }
 
     /**
@@ -148,8 +167,8 @@ class JobController extends Controller
     {
         $job = Job::where('user_id', auth('api')->id())->findOrFail($id);
         if ($job->delete()) {
-            return response()->json(['status' => true, 'data' => null, 'messages' => trans('dashboard.delete.successfully')]);
+            return response()->json(['status' => true, 'data' => null, 'messages' => trans('website.delete.successfully')]);
         }
-        return response()->json(['status' => false, 'data' => null, 'messages' => trans('dashboard.delete.fail')], 422);
+        return response()->json(['status' => false, 'data' => null, 'messages' => trans('website.delete.fail')], 422);
     }
 }

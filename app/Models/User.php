@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use App\Observers\UserObserver;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -36,6 +38,12 @@ class User extends Authenticatable implements JWTSubject
         'phone_verified_at' => 'datetime',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+        User::observe(UserObserver::class) ;
+    }
+
     public function media()
     {
         return $this->morphOne(AppMedia::class, 'app_mediaable');
@@ -61,6 +69,21 @@ class User extends Authenticatable implements JWTSubject
         return $this->belongsTo(Role::class);
     }
 
+    // public function wallet()
+    // {
+    //     return $this->hasOne(Wallet::class, 'user_id');
+    // }
+
+    // public function walletTransactions()
+    // {
+    //     return $this->HasMany(WalletTransaction::class, 'user_id', 'id');
+    // }
+
+    // public function caheOut()
+    // {
+    //     return $this->hasMany(CacheOutRequest::class, 'user_id', 'id');
+    // }
+
     public function tendersFavorite()
     {
         return $this->belongsToMany(Tender::class, 'favorite_tenders');
@@ -81,6 +104,11 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(Job::class);
     }
 
+    public function jobs()
+    {
+        return $this->belongsToMany(Job::class);
+    }
+
     public function setPasswordAttribute($value)
     {
         $this->attributes['password'] = Hash::make($value);
@@ -89,9 +117,17 @@ class User extends Authenticatable implements JWTSubject
     public function getAvatarAttribute()
     {
         $avatar = $this->media()->where('option', 'avatar')->first();
-        $image = $avatar ? 'storage/images/user/' . $avatar->media : 'dashboardAssets/images/backgrounds/avatar.jpg';
+        $image = $avatar ? 'storage/images/' . $avatar->media : 'assets/images/avatar.png';
 
         return asset($image);
+    }
+
+    public function getPreviousWorkAttribute()
+    {
+        $previous_work = $this->media()->where('option', 'previous_work')->first();
+        $image = $previous_work ? asset('storage/images/' . $previous_work->media) : null;
+
+        return $image;
     }
 
     public function hasPermissions($route, $method = null)
@@ -139,5 +175,10 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [];
+    }
+
+    public function broadcastOn()
+    {
+        return ['tender-channel'];
     }
 }

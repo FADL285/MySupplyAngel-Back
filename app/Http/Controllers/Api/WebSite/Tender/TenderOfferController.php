@@ -8,8 +8,10 @@ use App\Http\Resources\Api\WebSite\Tender\TenderOfferResource;
 use App\Http\Resources\Api\WebSite\Tender\TenderResource;
 use App\Models\Tender;
 use App\Models\TenderOffer;
+use App\Notifications\Website\Tender\TenderNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Notification;
 
 class TenderOfferController extends Controller
 {
@@ -50,7 +52,8 @@ class TenderOfferController extends Controller
         $user_id = auth('api')->id();
         $tender = Tender::where('user_id', '!=', $user_id)->where('status', 'admin_accept')->where('expiry_date', '>', now())->findOrFail($id);
         $tender->offers()->create( ['desc' => $request->validated('desc'), 'user_id' => $user_id]);
-        return response()->json(['status' => true, 'data' => null, 'message' => trans('dashboard.create.successfully')]);
+        Notification::send($tender->user, new TenderNotification($tender->id, 'add_offer', ['database', 'broadcast']));
+        return response()->json(['status' => true, 'data' => null, 'message' => trans('website.create.successfully')]);
     }
 
     /**
@@ -66,7 +69,7 @@ class TenderOfferController extends Controller
         $tender = Tender::where('user_id', '!=', $user_id)->findOrFail($tender, $offer);
         $tender_offer = $tender->offers()->findOrFail($offer);
         $tender_offer->update(['desc' => $request->validated('desc')]);
-        return response()->json(['status' => true, 'data' => null, 'message' => trans('dashboard.update.successfully')]);
+        return response()->json(['status' => true, 'data' => null, 'message' => trans('website.update.successfully')]);
     }
 
     /**
@@ -79,9 +82,9 @@ class TenderOfferController extends Controller
     {
         $tender_offer = TenderOffer::where(['tender_id' => $tender, 'user_id' => auth('api')->id()])->findOrFail($tender_offer);
         if ($tender_offer->delete()) {
-            return response()->json(['status' => true, 'data' => null, 'messages' => trans('dashboard.delete.successfully')]);
+            return response()->json(['status' => true, 'data' => null, 'messages' => trans('website.delete.successfully')]);
         }
-        return response()->json(['status' => false, 'data' => null, 'messages' => trans('dashboard.delete.fail')], 422);
+        return response()->json(['status' => false, 'data' => null, 'messages' => trans('website.delete.fail')], 422);
     }
 
     public function deleteTenderOfferMedia($tender, $offer, $media)
@@ -93,6 +96,6 @@ class TenderOfferController extends Controller
         if (file_exists(storage_path('app/public/images/'.$media->media))){
             File::delete(storage_path('app/public/images/'.$media->media));
         }
-        return response()->json(['status' => true, 'data' => null, 'messages' => trans('dashboard.delete.successfully')]);
+        return response()->json(['status' => true, 'data' => null, 'messages' => trans('website.delete.successfully')]);
     }
 }

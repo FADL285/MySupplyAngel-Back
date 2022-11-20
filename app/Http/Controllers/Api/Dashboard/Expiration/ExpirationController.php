@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\Api\Dashboard\Expiration;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\Dashboard\ChangeStatus\ChangeStatusRequest;
 use App\Http\Requests\Api\Dashboard\Expiration\ExpirationChangeRequest;
 use App\Http\Requests\Api\Dashboard\Expiration\ExpirationRequest;
 use App\Http\Resources\Api\Dashboard\Expiration\ExpirationResource;
 use App\Models\Expiration;
+use App\Notifications\Dashboard\ChangeStatus\AdminChangeStatusNotification;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Notification;
 
 class ExpirationController extends Controller
 {
@@ -49,12 +52,13 @@ class ExpirationController extends Controller
     {
         DB::beginTransaction();
         try {
-            $expiration = Expiration::create($request->safe()->except('category_ids') + ['status' => 'pending']);
+            $expiration = Expiration::create($request->safe()->except('category_ids') + ['status' => 'admin_accept']);
             $expiration->categories()->attach($request->validated('category_ids'));
             DB::commit();
             return response()->json(['status' => true, 'data' => null, 'message' => trans('dashboard.create.successfully')]);
         } catch (Exception $e) {
             DB::rollBack();
+            info($e->getMessage());
             return response()->json(['status' => false, 'data' => null, 'messages' => trans('dashboard.create.fail')], 422);
         }
     }
@@ -80,25 +84,28 @@ class ExpirationController extends Controller
      */
     public function update(ExpirationRequest $request, $id)
     {
-        $expiration = Expiration::findOrFail($id);
+        $expiration = Expiration::where('user_id', auth('api')->id())->findOrFail($id);
         DB::beginTransaction();
         try {
             $expiration->update($request->safe()->except('category_ids'));
-            $expiration->categories()->sync($request->safe()->only('category_ids'));
+            $expiration->categories()->sync($request->category_ids);
             DB::commit();
             return response()->json(['status' => true, 'data' => null, 'message' => trans('dashboard.update.successfully')]);
         } catch (Exception $e) {
             DB::rollBack();
+            info($e->getMessage());
             return response()->json(['status' => false, 'data' => null, 'messages' => trans('dashboard.update.fail')], 422);
         }
     }
 
-    public function changeStatus(ExpirationChangeRequest $request, $id)
+    public function changeStatus(ChangeStatusRequest $request, Expiration $expiration)
     {
-        $expiration = Expiration::findOrFail($id);
         $expiration->update(['status' => $request->status]);
-
-        return response()->json(['status' => true, 'data' => null, 'message' => trans('website.update.successfully')]);
+        if ($expiration->user)
+        {
+            Notification::send($expiration->user, new AdminChangeStatusNotification($expiration->id, 'expiration', $request->status, ['database', 'broadcast']));
+        }
+        return response()->json(['status' => true, 'data' => null, 'message' => trans('dashboard.update.successfully')]);
     }
 
     /**

@@ -19,12 +19,13 @@ class AdminController extends Controller
      */
     public function index(Request $request)
     {
-        $admins = User::where('user_type', 'admin')->when($request->keyword, function($query) use($request){
-                $query->where('fullname', 'like', '%' . $request->keyword . '%')
+        $admins = User::where('user_type', 'admin')
+        ->where('id', '!=', auth('api')->id())
+        ->when($request->keyword, function($query) use($request){
+                $query->where('name', 'like', '%' . $request->keyword . '%')
                 ->orWhere('email', 'like', '%' . $request->keyword . '%')
                 ->orWhere('phone', 'like', '%' . $request->keyword . '%');
-            })
-            ->latest()->paginate();
+            })->latest()->paginate();
 
         return AdminResource::collection($admins)->additional(['status' => true, 'messages' => '']);
     }

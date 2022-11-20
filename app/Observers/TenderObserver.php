@@ -40,7 +40,7 @@ class TenderObserver
             $medias = AppMedia::where(['app_mediaable_type' => 'App\Models\Tender', 'app_mediaable_id' => $tender->id])->get();
             foreach ($medias as $media)
             {
-                if (file_exists(storage_path('app/public/images/'.$media->media))){
+                if (file_exists(storage_path('app/public/images/'.$media->media))) {
                     File::delete(storage_path('app/public/images/'.$media->media));
                 }
             }

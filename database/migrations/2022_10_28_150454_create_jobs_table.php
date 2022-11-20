@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('job_title');
             $table->string('company_name');
             $table->string('desc')->nullable();
+            $table->dateTime('expiry_date')->nullable();
             $table->string('status')->nullable(); // pending - admin_accept - admin_reject
             $table->softDeletes();
             $table->timestamps();

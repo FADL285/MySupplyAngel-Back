@@ -12,6 +12,7 @@
         "laravel/sanctum": "^3.0",
         "laravel/tinker": "^2.7",
         "mcamara/laravel-localization": "^1.6",
+        "pusher/pusher-php-server": "^7.2",
         "tymon/jwt-auth": "^1.0"
     },
     "require-dev": {

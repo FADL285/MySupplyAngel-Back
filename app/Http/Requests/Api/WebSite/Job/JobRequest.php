@@ -28,6 +28,7 @@ class JobRequest extends FormRequest
         return [
             "country_id"   => "required|exists:countries,id",
             "city_id"      => "required|exists:cities,id",
+            "expiry_date"  => "nullable|date|after:".now(),
             "job_title"    => "required|string|min:3|max:255",
             "company_name" => "required|string|min:3|max:255",
             "desc"         => "required|string|min:3|max:300",

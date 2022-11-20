@@ -25,15 +25,18 @@ class ExpirationRequest extends FormRequest
      */
     public function rules()
     {
+        $status = $this->expiration ? 'nullable' : 'required';
+
         return [
             'title'               => 'required|string|min:2|max:255',
             'desc'                => 'required|string|min:2|max:500',
             'type'                => 'required|in:liquidation,expiration',
             'expiry_date'         => 'nullable|date|after:'.now(),
-            'company_name'        => 'required',
+            'company_name'        => 'required|min:2',
+            'product_name'        => 'required|min:2',
             'category_ids'        => 'required|array',
             'category_ids.*'      => 'exists:categories,id|distinct',
-            'expiration_images'   => 'required|array',
+            'expiration_images'   => $status .'|array',
             'expiration_images.*' => 'file',
             'expiration_files'    => 'nullable|array',
             'expiration_files.*'  => 'file',
