@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Dashboard\Notification\NotificationRequest;
 use App\Http\Resources\Api\Dashboard\Notification\NotificationResource;
 use App\Models\User;
+use App\Notifications\Dashboard\Management\ManagementNotification;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Facades\Notification;
 
 class NotificationController extends Controller
 {
@@ -42,20 +44,14 @@ class NotificationController extends Controller
                 break;
         }
 
-        $pushFcmNotes = [
-            'notify_type' => 'management',
-            'title'       => $request->title,
-            'body'        => $request->body,
-        ];
-
-        $database = [
-            'sender'      => auth('api')->user()->toJson(),
+        $data = [
+            'sender'      => auth('api')->user()->only(['id', 'name', 'phone', 'email'])->toJson(),
             'notify_type' => 'management',
             'title'       => ['en' => $request->title, 'ar' => $request->title],
             'body'        => ['en' => $request->body, 'ar' => $request->body]
         ];
-        // Notification::send($users, new ManagementNotification($database));
-        // pushFluterFcmNotes($pushFcmNotes, $users->pluck('id')->toArray());
+
+        Notification::send($users, new ManagementNotification($data, ['database', 'broadcast']));
         return response()->json(['status' => 'success', 'data' => null, 'messages' => trans('dashboard.send.success')]);
     }
 

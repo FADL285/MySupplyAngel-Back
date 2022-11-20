@@ -5,12 +5,16 @@ namespace App\Http\Controllers\Api\WebSite\Tender;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\WebSite\Tender\TenderRequest;
 use App\Http\Resources\Api\WebSite\Tender\TenderResource;
+use App\Models\AppMedia;
 use App\Models\FavoriteTender;
 use App\Models\Tender;
+use App\Models\User;
+use App\Notifications\Website\Tender\TenderNotification;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Notification;
 
 class TenderController extends Controller
 {
@@ -21,7 +25,8 @@ class TenderController extends Controller
      */
     public function index(Request $request)
     {
-        $tenders = Tender::where('status', 'admin_accept')->where('expiry_date', '>', now())
+        $tenders = Tender::where('status', 'admin_accept')
+        // ->where('expiry_date', '>', now())
         ->when($request->keyword, function($query) use($request){
             $query->where('name', 'LIKE', '%'.$request->keyword.'%')
             ->orWhere('desc', 'LIKE', '%'.$request->keyword.'%');
@@ -47,17 +52,17 @@ class TenderController extends Controller
      */
     public function myTenders(Request $request)
     {
-        $tenders = Tender::when($request->type == 'my_tenders', function ($query) {
+        $tenders = Tender::when($request->filter == 'my_tenders', function ($query) {
             $query->where('user_id', auth('api')->id());
-        })->when($request->type == 'my_offers', function ($query) {
+        })->when($request->filter == 'my_offers', function ($query) {
             $query->whereHas('offers', function ($query) {
                 $query->where('user_id', auth('api')->id());
             });
-        })->when($request->type == 'all', function ($query) {
+        })->when($request->filter == 'all', function ($query) {
             $query->where('user_id', auth('api')->id())->orWhereHas('offers', function ($query) {
                 $query->where('user_id', auth('api')->id());
             });
-        })->when(! in_array($request->type, ['my_tenders', 'my_offers', 'all']), function ($query) {
+        })->when(! in_array($request->filter, ['my_tenders', 'my_offers', 'all']), function ($query) {
             $query->where('user_id', auth('api')->id());
         })->when($request->keyword, function($query) use($request){
             $query->where('name', 'LIKE', '%'.$request->keyword.'%')
@@ -89,11 +94,14 @@ class TenderController extends Controller
         try {
             $tender = Tender::create($request->safe()->except('category_ids') + ['user_id' => auth('api')->id(), 'status' => 'pending']);
             $tender->categories()->attach($request->validated('category_ids'));
+            $admins = User::whereIn('user_type', ['admin', 'superadmin'])->get();
+            Notification::send($admins, new TenderNotification($tender->id, 'new_tender', ['database', 'broadcast']));
             DB::commit();
-            return response()->json(['status' => true, 'data' => null, 'message' => trans('dashboard.create.successfully')]);
+            return response()->json(['status' => true, 'data' => null, 'message' => trans('website.create.successfully')]);
         } catch (Exception $e) {
             DB::rollBack();
-            return response()->json(['status' => false, 'data' => null, 'messages' => trans('dashboard.create.fail')], 422);
+            info($e->getMessage());
+            return response()->json(['status' => false, 'data' => null, 'messages' => trans('website.create.fail')], 422);
         }
     }
 
@@ -124,10 +132,11 @@ class TenderController extends Controller
             $tender->update($request->safe()->except('category_ids'));
             $tender->categories()->sync($request->category_ids);
             DB::commit();
-            return response()->json(['status' => true, 'data' => null, 'message' => trans('dashboard.update.successfully')]);
+            return response()->json(['status' => true, 'data' => null, 'message' => trans('website.update.successfully')]);
         } catch (Exception $e) {
             DB::rollBack();
-            return response()->json(['status' => false, 'data' => null, 'messages' => trans('dashboard.update.fail')], 422);
+            info($e->getMessage());
+            return response()->json(['status' => false, 'data' => null, 'messages' => trans('website.update.fail')], 422);
         }
     }
 
@@ -140,10 +149,25 @@ class TenderController extends Controller
     public function destroy($id)
     {
         $tender = Tender::where('user_id', auth('api')->id())->findOrFail($id);
-        if ($tender->delete()) {
-            return response()->json(['status' => true, 'data' => null, 'messages' => trans('dashboard.delete.successfully')]);
+
+        $tender_offers = $tender->offers;
+        foreach ($tender_offers as $tender_offer) {
+            if ($tender_offer->media()->exists()) {
+                $medias = AppMedia::where(['app_mediaable_type' => 'App\Models\TenderOffer', 'app_mediaable_id' => $tender_offer->id])->get();
+                foreach ($medias as $media)
+                {
+                    if (file_exists(storage_path('app/public/images/'.$media->media))) {
+                        File::delete(storage_path('app/public/images/'.$media->media));
+                    }
+                }
+                $medias->each->delete();
+            }
         }
-        return response()->json(['status' => false, 'data' => null, 'messages' => trans('dashboard.delete.fail')], 422);
+
+        if ($tender->delete()) {
+            return response()->json(['status' => true, 'data' => null, 'messages' => trans('website.delete.successfully')]);
+        }
+        return response()->json(['status' => false, 'data' => null, 'messages' => trans('website.delete.fail')], 422);
     }
 
     public function deleteTenderMedia($tender, $media)
@@ -154,7 +178,7 @@ class TenderController extends Controller
         if (file_exists(storage_path('app/public/images/'.$media->media))){
             File::delete(storage_path('app/public/images/'.$media->media));
         }
-        return response()->json(['status' => true, 'data' => null, 'messages' => trans('dashboard.delete.successfully')]);
+        return response()->json(['status' => true, 'data' => null, 'messages' => trans('website.delete.successfully')]);
     }
 
     public function toggelToFavorite($id)
@@ -164,7 +188,7 @@ class TenderController extends Controller
         $favorite_tender = FavoriteTender::where(['user_id' => $user_id, 'tender_id' => $tender->id])->first();
         $favorite_tender ? $favorite_tender->delete() : FavoriteTender::create(['user_id' => $user_id, 'tender_id' => $tender->id]);
 
-        return response()->json(['status' => true, 'data' => ['is_favorite' => $favorite_tender ? false : true], 'messages' => trans('dashboard.create.successfully')]);
+        return response()->json(['status' => true, 'data' => ['is_favorite' => $favorite_tender ? false : true], 'messages' => trans('website.create.successfully')]);
     }
 
     public function favorite(Request $request)
@@ -177,7 +201,7 @@ class TenderController extends Controller
             $query->whereHas('categories', function ($query) use ($request) {
                 $query->where('id', $request->category_id);
             });
-        })->latest()->get();
+        })->latest()->paginate();
 
         return TenderResource::collection($favorite_tenders)->additional(['status' => true, 'message' => '']);
     }

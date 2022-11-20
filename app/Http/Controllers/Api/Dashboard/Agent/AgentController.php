@@ -3,14 +3,16 @@
 namespace App\Http\Controllers\Api\Dashboard\Agent;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\Dashboard\Agent\AgentChangeStatusRequest;
 use App\Http\Requests\Api\Dashboard\Agent\AgentRequest;
+use App\Http\Requests\Api\Dashboard\ChangeStatus\ChangeStatusRequest;
 use App\Http\Resources\Api\Dashboard\Agent\AgentResource;
 use App\Models\Agent;
+use App\Notifications\Dashboard\ChangeStatus\AdminChangeStatusNotification;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Notification;
 
 class AgentController extends Controller
 {
@@ -21,7 +23,11 @@ class AgentController extends Controller
      */
     public function index(Request $request)
     {
-        $agents = Agent::when($request->keyword, function($query) use($request){
+        $agents = Agent::when($request->type, function ($query) use($request) {
+            $query->where('type', $request->type);
+        })->when(! isset($request->type), function ($query) use($request) {
+            $query->where('type', 'required_agent_or_distrebutor');
+        })->when($request->keyword, function($query) use($request){
             $query->where('name', 'LIKE', '%'.$request->keyword.'%')
             ->orWhere('desc', 'LIKE', '%'.$request->keyword.'%');
         })->when($request->category_id, function ($query) use ($request) {
@@ -49,7 +55,7 @@ class AgentController extends Controller
     {
         DB::beginTransaction();
         try {
-            $agent = Agent::create($request->safe()->except('category_ids') + ['status' => 'pending']);
+            $agent = Agent::create($request->safe()->except('category_ids') + ['status' => 'admin_accept']);
             $agent->categories()->attach($request->validated('category_ids'));
             DB::commit();
             return response()->json(['status' => true, 'data' => null, 'message' => trans('dashboard.create.successfully')]);
@@ -84,21 +90,24 @@ class AgentController extends Controller
         DB::beginTransaction();
         try {
             $agent->update($request->safe()->except('category_ids'));
-            $agent->categories()->sync($request->safe()->only('category_ids'));
+            $agent->categories()->sync($request->category_ids);
             DB::commit();
             return response()->json(['status' => true, 'data' => null, 'message' => trans('dashboard.update.successfully')]);
         } catch (Exception $e) {
             DB::rollBack();
+            info($e->getMessage());
             return response()->json(['status' => false, 'data' => null, 'messages' => trans('dashboard.update.fail')], 422);
         }
     }
 
-    public function changeStatus(AgentChangeStatusRequest $request, $id)
+    public function changeStatus(ChangeStatusRequest $request, Agent $agent)
     {
-        $agent = Agent::findOrFail($id);
         $agent->update(['status' => $request->status]);
-
-        return response()->json(['status' => true, 'data' => null, 'message' => trans('website.update.successfully')]);
+        if ($agent->user)
+        {
+            Notification::send($agent->user, new AdminChangeStatusNotification($agent->id, 'agent', $request->status, ['database', 'broadcast']));
+        }
+        return response()->json(['status' => true, 'data' => null, 'message' => trans('dashboard.update.successfully')]);
     }
 
     /**
@@ -109,7 +118,7 @@ class AgentController extends Controller
      */
     public function destroy($id)
     {
-        $agent = Agent::where('user_id', auth('api')->id())->findOrFail($id);
+        $agent = Agent::findOrFail($id);
         if ($agent->delete()) {
             return response()->json(['status' => true, 'data' => null, 'messages' => trans('dashboard.delete.successfully')]);
         }
@@ -118,7 +127,7 @@ class AgentController extends Controller
 
     public function deleteAgentMedia($agent, $media)
     {
-        $agent = Agent::where('user_id', auth('api')->id())->findOrFail($agent);
+        $agent = Agent::findOrFail($agent);
         $media  = $agent->media()->findOrFail($media);
         $media->delete();
         if (file_exists(storage_path('app/public/images/'.$media->media))){

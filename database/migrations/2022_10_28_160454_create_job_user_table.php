@@ -13,11 +13,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('user_job', function (Blueprint $table) {
+        Schema::create('job_user', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('job_id')->constrained('jobs')->cascadeOnDelete();
-            $table->unique(['user_id', 'job_id']);
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->unique(['job_id', 'user_id']);
         });
     }
 
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('user_job');
+        Schema::dropIfExists('job_user');
     }
 };

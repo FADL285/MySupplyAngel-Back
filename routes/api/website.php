@@ -15,39 +15,40 @@ Route::namespace('Api\WebSite')->middleware('setLocale')->group(function () {
         Route::patch('reset-password', "AuthController@resetPassword");
     });
 
-    Route::group(['middleware' => ['auth:api']], function () {
+    Route::group(['middleware' => ['auth:api', 'client_middleware']], function () {
         Route::namespace('Auth')->group(function () {
             Route::post('logout', 'AuthController@logout');
         });
 
-        Route::namespace('Country')->withoutMiddleware('auth:api')->group(function () {
+        Route::namespace('Country')->withoutMiddleware(['auth:api', 'client_middleware'])->group(function () {
             Route::apiResource('countries', 'CountryController');
             Route::get('countries-without-pagination', 'CountryController@withoutPagination');
         });
 
-        Route::namespace('City')->withoutMiddleware('auth:api')->group(function () {
+        Route::namespace('City')->withoutMiddleware(['auth:api', 'client_middleware'])->group(function () {
             Route::apiResource('cities', 'CityController');
             Route::get('cities-without-pagination', 'CityController@withoutPagination');
         });
 
-        Route::namespace('Category')->withoutMiddleware('auth:api')->group(function () {
+        Route::namespace('Category')->withoutMiddleware(['auth:api', 'client_middleware'])->group(function () {
             Route::apiResource('categories', 'CategoryController');
             Route::get('categories-without-pagination', 'CategoryController@withoutPagination');
         });
 
         Route::namespace('Profile')->group(function () {
             Route::get('profile', 'ProfileController@index');
-            Route::patch('profile/edit', 'ProfileController@editProfile');
+            Route::put('profile/update', 'ProfileController@updateProfile');
             Route::patch('profile/edit-phone', 'ProfileController@editPhone');
-            Route::patch('profile/edit-email', 'ProfileController@editEmail');
-            Route::patch('profile/edit-password', 'ProfileController@editPassword');
+            Route::patch('profile/update-phone', 'ProfileController@updatePhone');
+            Route::patch('profile/update-email', 'ProfileController@updateEmail');
+            Route::patch('profile/update-password', 'ProfileController@updatePassword');
             Route::post('profile/previous-work', 'ProfileController@addPreviousWork');
             Route::delete('profile/previous-work', 'ProfileController@deletePreviousWork');
         });
 
         Route::namespace('Tender')->group(function () {
             Route::apiResource('tenders', 'TenderController')->except('index');
-            Route::get('tenders', 'TenderController@index')->withoutMiddleware('auth:api');
+            Route::get('tenders', 'TenderController@index')->withoutMiddleware(['auth:api', 'client_middleware']);
             Route::get('my-tenders', 'TenderController@myTenders');
             Route::delete('tender/{tender}/medias/{media}', 'TenderController@deleteTenderMedia');
             Route::get('tenders/{tender}/offers', 'TenderOfferController@index');
@@ -62,8 +63,8 @@ Route::namespace('Api\WebSite')->middleware('setLocale')->group(function () {
 
         Route::namespace('Expiration')->group(function () {
             Route::apiResource('expirations', 'ExpirationController')->except(['index', 'show']);
-            Route::get('expirations', 'ExpirationController@index')->withoutMiddleware('auth:api');
-            Route::get('expirations/{expiration}', 'ExpirationController@show')->withoutMiddleware('auth:api');
+            Route::get('expirations', 'ExpirationController@index')->withoutMiddleware(['auth:api', 'client_middleware']);
+            Route::get('expirations/{expiration}', 'ExpirationController@show')->withoutMiddleware(['auth:api', 'client_middleware']);
             Route::get('my-expiration', 'ExpirationController@myExpirations');
             Route::delete('expiration/{expiration}/medias/{media}', 'ExpirationController@deleteExpirationMedia');
             Route::get('expiration/favorites', 'ExpirationController@favorite');
@@ -72,8 +73,8 @@ Route::namespace('Api\WebSite')->middleware('setLocale')->group(function () {
 
         Route::namespace('Agent')->group(function () {
             Route::apiResource('agents', 'AgentController')->except(['index', 'show']);
-            Route::get('agents', 'AgentController@index')->withoutMiddleware('auth:api');
-            Route::get('agents/{agent}', 'AgentController@show')->withoutMiddleware('auth:api');
+            Route::get('agents', 'AgentController@index')->withoutMiddleware(['auth:api', 'client_middleware']);
+            Route::get('agents/{agent}', 'AgentController@show')->withoutMiddleware(['auth:api', 'client_middleware']);
             Route::get('my-agent', 'AgentController@myAgents');
             Route::delete('agent/{agent}/medias/{media}', 'AgentController@deleteAgentMedia');
             Route::get('agents/{agent}/offers', 'AgentOfferController@index');
@@ -88,14 +89,12 @@ Route::namespace('Api\WebSite')->middleware('setLocale')->group(function () {
 
         Route::namespace('Job')->group(function () {
             Route::apiResource('jobs', 'JobController')->except(['indes', 'show']);
-            Route::get('jobs', 'JobController@index')->withoutMiddleware('auth:api');
-            Route::get('jobs/{job}', 'JobController@show')->withoutMiddleware('auth:api');
-            Route::get('my-job', 'JobController@myJob');
-            Route::delete('job/{job}/medias/{media}', 'JobController@deleteJobMedia');
-            Route::get('job/favorites', 'JobController@favorite');
-            Route::post('job/{job}/favorite', 'JobController@toggelToFavorite');
-            Route::get('employees', 'JobController@employees')->withoutMiddleware('auth:api');
-            Route::get('employees/{employee}', 'JobController@employee')->withoutMiddleware('auth:api');
+            Route::get('jobs', 'JobController@index')->withoutMiddleware(['auth:api', 'client_middleware']);
+            Route::get('jobs/{job}', 'JobController@show')->withoutMiddleware(['auth:api', 'client_middleware']);
+            Route::get('my-job', 'JobController@myJobs');
+            Route::post('job/{job}/applayon', 'JobController@applayOnJob');
+            Route::get('employees', 'JobController@employees')->withoutMiddleware(['auth:api', 'client_middleware']);
+            Route::get('employees/{employee}', 'JobController@showEmployee')->withoutMiddleware(['auth:api', 'client_middleware']);
             Route::patch('employees/need-job', 'JobController@needJob');
         });
 
@@ -104,16 +103,16 @@ Route::namespace('Api\WebSite')->middleware('setLocale')->group(function () {
             Route::delete('delete-all-notifications', 'NotificationController@deleteAllNotifications');
         });
 
-        Route::namespace('Contact')->withoutMiddleware('auth:api')->group(function () {
+        Route::namespace('Contact')->withoutMiddleware(['auth:api', 'client_middleware'])->group(function () {
             Route::get('contacts', 'ContactController@getContact');
             Route::post('contact-us', 'ContactController@contact');
         });
 
-        Route::namespace('Home')->withoutMiddleware('auth:api')->group(function () {
+        Route::namespace('Home')->withoutMiddleware(['auth:api', 'client_middleware'])->group(function () {
             Route::get('home', 'HomeController@index');
         });
 
-        Route::namespace('General')->withoutMiddleware('auth:api')->group(function () {
+        Route::namespace('General')->withoutMiddleware(['auth:api', 'client_middleware'])->group(function () {
             Route::get('about', 'GeneralController@getAbout');
             Route::get('terms', 'GeneralController@getTerms');
             Route::get('privacy', 'GeneralController@getPrivacy');

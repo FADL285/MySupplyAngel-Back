@@ -1,12 +1,14 @@
 <?php
 
-namespace App\Http\Requests\Api\Dashboard\Expiration;
+namespace App\Http\Requests\Api\Dashboard\Profile;
 
+use Exception;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 
-class ExpirationChangeRequest extends FormRequest
+class UpdateProfileRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,8 +27,15 @@ class ExpirationChangeRequest extends FormRequest
      */
     public function rules()
     {
+        $country_id = $this->country_id ?? optional(auth('api')->user()->country)->id;
         return [
-            'status' => 'required|in:pending,admin_accept,admin_reject'
+            'name'       => 'nullable|string',
+            'email'      => ['nullable', Rule::unique('users')->ignore(auth('api')->id())->where(fn ($query) => $query->whereNull('deleted_at'))],
+            'avatar'     => 'nullable|file',
+            'phone_code' => 'nullable|integer',
+            'phone'      => 'nullable|integer',
+            'country_id' => 'nullable|exists:countries,id',
+            'city_id'    => 'nullable|exists:countries,id',
         ];
     }
 

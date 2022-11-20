@@ -3,13 +3,16 @@
 namespace App\Http\Controllers\Api\Dashboard\Job;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\Dashboard\ChangeStatus\ChangeStatusRequest;
 use App\Http\Requests\Api\Dashboard\Job\JobChangeRequest;
 use App\Http\Requests\Api\Dashboard\Job\JobRequest;
 use App\Http\Resources\Api\Dashboard\Job\JobResource;
 use App\Models\Job;
+use App\Notifications\Dashboard\ChangeStatus\AdminChangeStatusNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 
-class JobContoller extends Controller
+class JobController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -35,7 +38,7 @@ class JobContoller extends Controller
      */
     public function store(JobRequest $request)
     {
-        $job = Job::create($request->validated());
+        $job = Job::create($request->validated() + ['status' => 'admin_accept']);
         return response()->json(['status' => true, 'data' => null, 'message' => trans('website.create.successfully')]);
     }
 
@@ -64,15 +67,17 @@ class JobContoller extends Controller
         $job = Job::findOrFail($id);
         $job->update($request->validate());
 
-        return response()->json(['status' => true, 'data' => null, 'message' => trans('website.update.successfully')]);
+        return response()->json(['status' => true, 'data' => null, 'message' => trans('dashboard.update.successfully')]);
     }
 
-    public function changeStatus(JobChangeRequest $request, $id)
+    public function changeStatus(ChangeStatusRequest $request, Job $job)
     {
-        $job = Job::findOrFail($id);
         $job->update(['status' => $request->status]);
-
-        return response()->json(['status' => true, 'data' => null, 'message' => trans('website.update.successfully')]);
+        if ($job->user)
+        {
+            Notification::send($job->user, new AdminChangeStatusNotification($job->id, 'job', $request->status, ['database', 'broadcast']));
+        }
+        return response()->json(['status' => true, 'data' => null, 'message' => trans('dashboard.update.successfully')]);
     }
 
     /**

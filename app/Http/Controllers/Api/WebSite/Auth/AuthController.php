@@ -25,25 +25,27 @@ class AuthController extends Controller
 
             if (setting('use_sms_service') == 'enable') {
                 $code = mt_rand(1111, 9999);
-                $other_data = ['email_verified_at' => now(), 'is_admin_active_user' => true, 'is_ban' => false, 'user_type' => 'client'];
             }
-            else
-            {
-                $other_data = ['is_active' => true, 'phone_verified_at' => now(), 'email_verified_at' => now(), 'is_admin_active_user' => true, 'is_ban' => false, 'user_type' => 'client'];
-            }
+            $other_data = ['is_active' => false, 'phone_verified_at' => null, 'email_verified_at' => now(), 'is_admin_active_user' => true, 'verified_code' => $code, 'is_ban' => false, 'user_type' => 'client'];
+            // else
+            // {
+            //     $other_data = ['is_active' => true, 'phone_verified_at' => now(), 'email_verified_at' => now(), 'is_admin_active_user' => true, 'verified_code' => $code, 'is_ban' => false, 'user_type' => 'client'];
+            // }
 
             $user = User::create(Arr::except($request->validated(), ['country_id', 'city_id', 'company_name', 'company_address', 'commercial_register_num', 'tax_card_num', 'categories']) + $other_data);
             $user->profile()->create(Arr::only($request->validated(), ['country_id', 'city_id']));
             $user->company()->create(Arr::only($request->validated(), ['company_name', 'company_address', 'commercial_register_num', 'tax_card_num']));
             $user->categories()->attach($request->validated('categories'));
+            // $user->wallet()->create();
 
             $user = $user->fresh();
-            $is_verified = $user->is_active && $user->phone_verified_at;
+            // $is_verified = $user->is_active && $user->phone_verified_at;
 
             DB::commit();
-            return response()->json(['status' => true, 'data' => ['is_verified' => $is_verified], 'message' => trans('website.auth.success_sign_up')]);
-        } catch (\Exception $e) {
+            return response()->json(['status' => true, 'data' => null, 'message' => trans('website.auth.success_sign_up')]); // ['is_verified' => $is_verified]
+        } catch (Exception $e) {
             DB::rollback();
+            info($e->getMessage());
             return response()->json(['status' => false, 'data' => null, 'message' => trans('website.auth.not_registered_try_again')], 422);
         }
     }
@@ -64,6 +66,7 @@ class AuthController extends Controller
             }
         } catch (Exception $e) {
             DB::rollback();
+            info($e->getMessage());
             return response()->json(['status' => false, 'data' => null, 'message' => trans('website.messages.something_went_wrong_please_try_again')], 422);
         }
     }
@@ -72,12 +75,14 @@ class AuthController extends Controller
     {
         $user = User::where(['phone' => $request->phone, 'phone_code' => $request->phone_code, 'user_type' => 'client'])->firstOrFail();
         try {
+            $code = 1111;
             if (setting('use_sms_service') == 'enable') {
                 $code = mt_rand(1111, 9999);
-                $user->update(['verified_code' => $code]);
             }
+            $user->update(['verified_code' => $code]);
             return response()->json(['status' => true, 'data' => null, 'message' => trans('website.auth.sent_code_successfully')], 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
+            info($e->getMessage());
             return response()->json(['status' => false, 'data' => null, 'message' => trans('website.messages.something_went_wrong_please_try_again')], 422);
         }
     }
@@ -85,16 +90,17 @@ class AuthController extends Controller
     public function login(LoginRequest $request)
     {
         if (! $token = auth('api')->attempt($this->getCredentials($request), ['user_type' => 'client'])) {
-            return response()->json(['status' => false, 'data' => null, 'is_active' => false, 'is_ban' => false, 'message' => trans('website.auth.failed')], 402);
+            return response()->json(['status' => false, 'data' => null, 'is_active' => false, 'is_ban' => false, 'message' => trans('website.auth.failed')], 422);
         }
 
         $user = auth('api')->user();
 
         if (! $user->is_active) {
+            $code = 1111;
             if (setting('use_sms_service') == 'enable') {
                 $code = mt_rand(1111, 9999);
-                $user->update(['verified_code' => $code]);
             }
+            $user->update(['verified_code' => $code]);
             auth('api')->logout();
             return response()->json(['status' => false, 'data' => null, 'is_active' => (bool) $user->is_active, 'is_ban' => (bool) $user->is_ban, 'message' => trans('website.auth.account_is_not_activated')], 403);
         } elseif ($user->is_ban) {
@@ -116,14 +122,16 @@ class AuthController extends Controller
     {
         $user = User::where(['phone' => $request->phone, 'phone_code' => $request->phone_code, 'user_type' => 'client'])->firstOrFail();
         try {
+            $code = 1111;
             if (setting('use_sms_service') == 'enable') {
                 $code = mt_rand(1111, 9999);
-                $user->update(['verified_code' => $code]);
             }
+            $user->update(['verified_code' => $code]);
 
-            return response()->json(['status' => true, 'message' => trans('website.auth.sent_code_successfully'), 'data' => ['code' => $user->reset_code]], 200);
+            return response()->json(['status' => true, 'data' => null, 'message' => trans('website.auth.sent_code_successfully')], 200);
         } catch (Exception $e) {
-            return response()->json(['status' => false, 'message' => trans('website.messages.something_went_wrong_please_try_again'), 'data' => null], 422);
+            info($e->getMessage());
+            return response()->json(['status' => false, 'data' => null, 'message' => trans('website.messages.something_went_wrong_please_try_again')], 422);
         }
     }
 
@@ -134,21 +142,36 @@ class AuthController extends Controller
             return response()->json(['status' => false, 'data' => null, 'message' => trans('website.auth.user_not_found')], 404);
         } elseif (!$user->phone_verified_at && $user->verified_code == $request->code) {
             return response()->json(['status' => true, 'data' => null, 'message' => trans('website.auth.code_is_true'), 'is_active' => false]);
+        } elseif ($user->phone_verified_at && $user->verified_code == $request->code) {
+            return response()->json(['status' => true, 'data' => null, 'message' => trans('website.auth.code_is_true'), 'is_active' => true]);
         }
-        return response()->json(['status' => true, 'data' => null, 'message' => trans('website.auth.first_verify_account'), 'is_active' => true]);
+        return response()->json(['status' => false, 'data' => null, 'message' => trans('website.auth.code_not_true')], 422);
     }
 
     public function resetPassword(ResetPasswordRequest $request)
     {
-        $user = User::where(['phone' => $request->phone, 'phone_code' => $request->phone_code, 'user_type' => 'client'])->firstOrFail();
+        $user = User::where(['phone' => $request->phone, 'phone_code' => $request->phone_code, 'user_type' => 'client'])->first();
 
         if (!$user) {
             return response()->json(['status' => false, 'data' => null, 'message' => trans('website.auth.phone_not_true_or_account_deactive')], 422);
         } elseif (!$user->phone_verified_at && $user->verified_code == $request->code) {
             $user->update(['password' => $request->password, 'verified_code' => null, 'is_active' => true, 'phone_verified_at' => now()]);
+            return response()->json(['status' => true, 'data' => null, 'message' => trans('website.auth.success_change_password')]);
+        } elseif ($user->phone_verified_at && $user->verified_code == $request->code) {
+            $user->update(['password' => $request->password, 'verified_code' => null]);
+            return response()->json(['status' => true, 'data' => null, 'message' => trans('website.auth.success_change_password')]);
+        } elseif ($user->verified_code == null) {
+            $code = 1111;
+            if (setting('use_sms_service') == 'enable') {
+                $code = mt_rand(1111, 9999);
+            }
+            $user->update(['verified_code' => $code]);
+            return response()->json(['status' => false, 'data' => null, 'message' => trans('website.auth.new_code_sent_successfuly')], 422);
+        } elseif ($user->verified_code != $request->code) {
+            return response()->json(['status' => false, 'data' => null, 'message' => trans('website.auth.code_not_true')], 422);
         }
 
-        return response()->json(['status' => true, 'data' => null, 'message' => trans('website.auth.success_change_password')]);
+        return response()->json(['status' => false, 'data' => null, 'message' => trans('website.auth.cant_change_password')], 422);
     }
 
     public function logout()

@@ -26,12 +26,13 @@ class AgentRequest extends FormRequest
     public function rules()
     {
         $status = $this->agent ? 'nullable' : 'required';
+
         return [
             'title'          => 'required|string|min:2|max:255',
             'desc'           => 'required|string|min:2|max:500',
             'agent_type'     => 'required|in:agent,distrebutor',
             'type'           => 'required|in:required_agent_or_distrebutor,potential_agent_or_potential_distrebutor',
-            'expiry_date'    => 'nullable|date|after:'.now(),
+            'expiry_date'    => 'required|date|after:'.now(),
             'company_name'   => 'required',
             'product_name'   => 'required',
             'category_ids'   => 'required|array',

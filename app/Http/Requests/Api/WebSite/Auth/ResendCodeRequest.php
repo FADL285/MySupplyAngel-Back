@@ -26,8 +26,8 @@ class ResendCodeRequest extends FormRequest
     public function rules()
     {
         return [
-            'phone_code' => 'nullable|string|exists:users,phone_code' ,
-            'phone'      => 'required|numeric|digits_between:10,23|exists:users,phone',
+            'phone_code' => 'required|numeric|exists:countries,phone_code',
+            'phone'      => 'required|numeric|digits_between:9,23|exists:users,phone,user_type,client,phone_code,' .  $this->phone_code,
         ];
     }
 

@@ -8,8 +8,10 @@ use App\Http\Resources\Api\WebSite\Agent\AgentOfferResource;
 use App\Http\Resources\Api\WebSite\Agent\AgentResource;
 use App\Models\Agent;
 use App\Models\AgentOffer;
+use App\Notifications\Website\Agent\AgentNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Notification;
 
 class AgentOfferController extends Controller
 {
@@ -20,7 +22,7 @@ class AgentOfferController extends Controller
      */
     public function index(Request $request, $id)
     {
-        $agent = Agent::where(['user_id' => auth('api')->id(), 'type' => 'potential_agent_or_potential_distrebutor'])->findOrFail($id);
+        $agent = Agent::where(['user_id' => auth('api')->id(), 'type' => 'required_agent_or_distrebutor'])->findOrFail($id);
         $offers = $agent->offers()->when($request->keyword, function($query) use($request){
             $query->Where('desc', 'LIKE', '%'.$request->keyword.'%');
         })->latest()->get();
@@ -48,9 +50,10 @@ class AgentOfferController extends Controller
     public function store(AgentOfferRequest $request, $id)
     {
         $user_id = auth('api')->id();
-        $agent = Agent::where('user_id', '!=', $user_id)->where(['status' => 'admin_accept', 'type' => 'potential_agent_or_potential_distrebutor'])->where('expiry_date', '>', now())->findOrFail($id);
+        $agent = Agent::where('user_id', '!=', $user_id)->where(['status' => 'admin_accept', 'type' => 'required_agent_or_distrebutor'])->where('expiry_date', '>', now())->findOrFail($id);
         $agent->offers()->create( ['desc' => $request->validated('desc'), 'user_id' => $user_id]);
-        return response()->json(['status' => true, 'data' => null, 'message' => trans('dashboard.create.successfully')]);
+        Notification::send($agent->user, new AgentNotification($agent->id, 'add_offer', ['database', 'broadcast']));
+        return response()->json(['status' => true, 'data' => null, 'message' => trans('website.create.successfully')]);
     }
 
     /**
@@ -63,10 +66,10 @@ class AgentOfferController extends Controller
     public function update(AgentOfferRequest $request, $agent, $offer)
     {
         $user_id = auth('api')->id();
-        $agent = Agent::where('user_id', '!=', $user_id)->where('type', 'potential_agent_or_potential_distrebutor')->findOrFail($agent, $offer);
+        $agent = Agent::where('user_id', '!=', $user_id)->where('type', 'required_agent_or_distrebutor')->findOrFail($agent, $offer);
         $agent_offer = $agent->offers()->findOrFail($offer);
         $agent_offer->update(['desc' => $request->validated('desc')]);
-        return response()->json(['status' => true, 'data' => null, 'message' => trans('dashboard.update.successfully')]);
+        return response()->json(['status' => true, 'data' => null, 'message' => trans('website.update.successfully')]);
     }
 
     /**
@@ -79,9 +82,9 @@ class AgentOfferController extends Controller
     {
         $agent_offer = AgentOffer::where(['agent_id' => $agent, 'user_id' => auth('api')->id()])->findOrFail($agent_offer);
         if ($agent_offer->delete()) {
-            return response()->json(['status' => true, 'data' => null, 'messages' => trans('dashboard.delete.successfully')]);
+            return response()->json(['status' => true, 'data' => null, 'messages' => trans('website.delete.successfully')]);
         }
-        return response()->json(['status' => false, 'data' => null, 'messages' => trans('dashboard.delete.fail')], 422);
+        return response()->json(['status' => false, 'data' => null, 'messages' => trans('website.delete.fail')], 422);
     }
 
     public function deleteAgentOfferMedia($agent, $offer, $media)
@@ -93,6 +96,6 @@ class AgentOfferController extends Controller
         if (file_exists(storage_path('app/public/images/'.$media->media))){
             File::delete(storage_path('app/public/images/'.$media->media));
         }
-        return response()->json(['status' => true, 'data' => null, 'messages' => trans('dashboard.delete.successfully')]);
+        return response()->json(['status' => true, 'data' => null, 'messages' => trans('website.delete.successfully')]);
     }
 }

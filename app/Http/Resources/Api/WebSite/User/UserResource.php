@@ -20,7 +20,7 @@ class UserResource extends JsonResource
         return [
             'id'                      => (int) $this->id,
             'avatar'                  => (string) $this->avatar,
-            'fullname'                => (string) $this->name,
+            'name'                    => (string) $this->name,
             'phone_code'              => (string) $this->phone_code,
             'phone'                   => (string) $this->phone,
             'whats'                   => (string) $this->whats,
@@ -33,6 +33,8 @@ class UserResource extends JsonResource
             'city'                    => optional($this->profile)->city_id ? new CityResource($this->profile->city) : null,
             'categories'              => CategoryResource::collection($this->categories),
             'is_need_job'             => (bool) $this->is_need_job,
+            'previous_work'           => $this->previous_work,
+            'is_subcribed'            => (bool) false,
             'token'                   => $this->when($this->token, $this->token),
         ];
     }

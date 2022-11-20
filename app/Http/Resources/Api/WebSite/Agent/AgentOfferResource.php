@@ -19,8 +19,8 @@ class AgentOfferResource extends JsonResource
             'id'     => (int) $this->id,
             'user'   => $this->user ? new SimpleUserResource($this->user) : null,
             'desc'   => (string) $this->desc,
-            'images' => AgentMediaResource::collection($this->tender_offer_images),
-            'files'  => AgentMediaResource::collection($this->tender_offer_files),
+            'images' => AgentMediaResource::collection($this->agent_offer_images),
+            'files'  => AgentMediaResource::collection($this->agent_offer_files),
         ];
     }
 }
