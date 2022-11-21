@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Requests\Api\Dashboard\OurServices;
+namespace App\Http\Requests\Api\Dashboard\Package;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class OurServicesRequest extends FormRequest
+class PackageRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,11 +25,12 @@ class OurServicesRequest extends FormRequest
      */
     public function rules()
     {
-        $status = $this;
         return [
-            'title'  => 'required|string|min:2',
-            'desc'   => 'required|string|min:2',
-            'avatar' => 'nullable|mimes:jpeg,png,jpg,gif,svg',
+            'title' => 'required|string|min:2',
+            'desc'  => 'required|string|min:2',
+            'note'  => 'required|string|min:2',
+            'price' => 'required',
+            'duration_by_month' => 'required',
         ];
     }
 

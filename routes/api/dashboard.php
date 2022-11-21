@@ -79,5 +79,9 @@ Route::namespace('Api\Dashboard')->middleware('setLocale')->group(function () {
         Route::namespace('Job')->group(function () {
             Route::apiResource('jobs', 'JobController');
         });
+
+        Route::namespace('Package')->group(function () {
+            Route::apiResource('packages', 'PackageController');
+        });
     });
 });
