@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Requests\Api\Dashboard\OurServices;
+namespace App\Http\Requests\Api\Dashboard\Contact;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class OurServicesRequest extends FormRequest
+class ContactReplyRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,11 +25,9 @@ class OurServicesRequest extends FormRequest
      */
     public function rules()
     {
-        $status = $this;
         return [
-            'title'  => 'required|string|min:2',
-            'desc'   => 'required|string|min:2',
-            'avatar' => 'nullable|mimes:jpeg,png,jpg,gif,svg',
+            'reply'     => 'required|string|between:2,100000',
+            'send_type' => 'required|in:notify,sms,email'
         ];
     }
 
