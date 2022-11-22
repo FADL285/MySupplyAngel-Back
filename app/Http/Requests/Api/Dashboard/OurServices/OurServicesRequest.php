@@ -25,7 +25,7 @@ class OurServicesRequest extends FormRequest
      */
     public function rules()
     {
-        $status = $this;
+        // $status = $this;
         return [
             'title'  => 'required|string|min:2',
             'desc'   => 'required|string|min:2',

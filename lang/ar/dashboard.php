@@ -16,7 +16,7 @@ return [
         'signed_out_successfully' => 'تم تسجيل الخروج بنجاح',
         'Trying_to_sign_up_for_admin_account' => 'محاولة تسجيل بحساب ادمن',
         'account_banned_by_admin' => 'هذا الحساب تم حظرة من قبل الادارة لـ :ban_reason',
-
+        'credentials_not_found' => 'البيانات غير صحيحه.',
         'account_is_not_activated' => 'هذا الحساب غير مفعل ',
         'verified_code_is' => 'كود تفعيل الحساب :code',
         'failed'   => 'بيانات الاعتماد هذه غير متطابقة مع البيانات المسجلة لدينا.',

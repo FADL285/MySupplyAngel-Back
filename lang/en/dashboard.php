@@ -22,6 +22,7 @@ return [
         'new_code_sent_successfuly' => 'a new code has been sent, please enter it to be able to change the password successfully.',
         'success_change_phone' => 'phone changed successfully',
         'cant_change_phone' => 'cant change phone.',
+        'credentials_not_found' => 'the data is incorrect.',
     ],
 
     'messages' => [
