@@ -25,6 +25,8 @@ class AgentRequest extends FormRequest
      */
     public function rules()
     {
+        $status = $this->agent ? 'nullable' : 'required';
+
         return [
             'user_id'        => 'required|exists:users,id,user_type,client',
             'title'          => 'required|string|min:2|max:255',
@@ -35,7 +37,7 @@ class AgentRequest extends FormRequest
             'product_name'   => 'required',
             'category_ids'   => 'required|array',
             'category_ids.*' => 'exists:categories,id|distinct',
-            'agent_images'   => 'required|array',
+            'agent_images'   => $status . '|array',
             'agent_images.*' => 'file',
             'agent_files'    => 'nullable|array',
             'agent_files.*'  => 'file',

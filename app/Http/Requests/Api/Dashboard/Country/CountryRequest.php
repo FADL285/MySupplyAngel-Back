@@ -27,7 +27,7 @@ class CountryRequest extends FormRequest
      */
     public function rules()
     {
-        $status = $this->category ? 'nullable' : 'required';
+        $status = $this->country ? 'nullable' : 'required';
         $country = isset($this->country) ? Country::findOrFail($this->country) : null;
 
         $rules = [
