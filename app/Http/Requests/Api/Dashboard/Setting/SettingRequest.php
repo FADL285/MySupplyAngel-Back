@@ -48,6 +48,8 @@ class SettingRequest extends FormRequest
             'terms_ar'             => "nullable|string",
             'why_us_ar'            => "nullable|string",
             'why_us_en'            => "nullable|string",
+            'lat'                  => "nullable|string",
+            'lng'                  => "nullable|string",
             'description_location' => "nullable|string",
             'phone'                => "nullable|string|max:255",
         ];

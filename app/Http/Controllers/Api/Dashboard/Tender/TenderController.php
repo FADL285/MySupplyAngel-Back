@@ -23,8 +23,7 @@ class TenderController extends Controller
      */
     public function index(Request $request)
     {
-        $tenders = Tender::where('status', 'admin_accept')
-        ->when($request->keyword, function($query) use($request){
+        $tenders = Tender::when($request->keyword, function($query) use($request){
             $query->where('name', 'LIKE', '%'.$request->keyword.'%')
             ->orWhere('desc', 'LIKE', '%'.$request->keyword.'%');
         })->when($request->category_id, function ($query) use ($request) {

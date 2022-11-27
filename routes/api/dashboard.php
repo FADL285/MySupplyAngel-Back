@@ -83,5 +83,13 @@ Route::namespace('Api\Dashboard')->middleware('setLocale')->group(function () {
         Route::namespace('Package')->group(function () {
             Route::apiResource('packages', 'PackageController');
         });
+
+        Route::namespace('OurServices')->group(function () {
+            Route::apiResource('our-services', 'OurServicesController');
+        });
+
+        Route::namespace('MyClient')->group(function () {
+            Route::apiResource('my-client', 'MyClientController');
+        });
     });
 });
