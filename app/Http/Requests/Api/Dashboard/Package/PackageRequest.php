@@ -31,6 +31,7 @@ class PackageRequest extends FormRequest
             'note'  => 'required|string|min:2',
             'price' => 'required',
             'duration_by_month' => 'required',
+            'type'  => 'required|string|in:free,supplier_package,package_agents_and_distributors,package_inclusive'
         ];
     }
 

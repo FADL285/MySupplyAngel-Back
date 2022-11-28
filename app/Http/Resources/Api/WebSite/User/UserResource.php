@@ -5,6 +5,7 @@ namespace App\Http\Resources\Api\WebSite\User;
 use App\Http\Resources\Api\WebSite\Category\CategoryResource;
 use App\Http\Resources\Api\WebSite\City\CityResource;
 use App\Http\Resources\Api\WebSite\Country\CountryResource;
+use App\Models\Subscription;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class UserResource extends JsonResource
@@ -34,7 +35,7 @@ class UserResource extends JsonResource
             'categories'              => CategoryResource::collection($this->categories),
             'is_need_job'             => (bool) $this->is_need_job,
             'previous_work'           => $this->previous_work,
-            'is_subcribed'            => (bool) false,
+            'is_subcribed'            => (bool) (Subscription::where('user_id', $this->id)->whereIn('status', ['free', 'paid'])->where('end_at', '>', now())->first() ? true : false),
             'token'                   => $this->when($this->token, $this->token),
         ];
     }

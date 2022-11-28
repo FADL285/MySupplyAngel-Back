@@ -118,5 +118,9 @@ Route::namespace('Api\WebSite')->middleware('setLocale')->group(function () {
             Route::get('privacy', 'GeneralController@getPrivacy');
             Route::get('why-us', 'GeneralController@getWhyUs');
         });
+
+        Route::namespace('Subscription')->group(function () {
+            Route::post('subscription', 'SubscriptionController@subscrip');
+        });
     });
 });

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('note');
             $table->double('price');
             $table->integer('duration_by_month');
+            $table->string('type')->default('free'); // free - supplier_package - package_agents_and_distributors - package_inclusive
             $table->timestamps();
         });
     }
