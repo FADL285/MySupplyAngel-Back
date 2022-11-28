@@ -19,6 +19,8 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->dateTime('start_at')->nullable();
             $table->dateTime('end_at')->nullable();
+            $table->string('transaction_id')->nullable();
+            $table->string('status')->default('pending'); // pending - free - paid - unpaid - expired
             $table->timestamps();
         });
     }
