@@ -24,7 +24,7 @@ class ExpirationController extends Controller
      */
     public function index(Request $request)
     {
-        $expirations = Expiration::when($request->keyword, function($query) use($request){
+        $expirations = Expiration::where(['status' => 'admin_accept'])->when($request->keyword, function($query) use($request){
             $query->where('name', 'LIKE', '%'.$request->keyword.'%')
             ->orWhere('desc', 'LIKE', '%'.$request->keyword.'%');
         })->when($request->category_id, function ($query) use ($request) {
@@ -89,7 +89,7 @@ class ExpirationController extends Controller
     {
         DB::beginTransaction();
         try {
-            $expiration = Expiration::create($request->safe()->except('category_ids') + ['user_id' => auth('api')->id(), 'status' => 'pending']);
+            $expiration = Expiration::create($request->safe()->except('category_ids') + ['user_id' => auth('api')->id(), 'status' => setting('accepted') != 'automatic' ? 'pending' : 'admin_accept']);
             $expiration->categories()->attach($request->validated('category_ids'));
             $admins = User::whereIn('user_type', ['admin', 'superadmin'])->get();
             Notification::send($admins, new ExpirationNotification($expiration->id, 'new_expiration', ['database', 'broadcast']));
@@ -166,7 +166,7 @@ class ExpirationController extends Controller
     public function toggelToFavorite($id)
     {
         $user_id = auth('api')->id();
-        $expiration = Expiration::findOrFail($id);
+        $expiration = Expiration::where(['status' => 'admin_accept'])->findOrFail($id);
         $favorite_expiration = FavoriteExpiration::where(['user_id' => $user_id, 'expiration_id' => $expiration->id])->first();
         $favorite_expiration ? $favorite_expiration->delete() : FavoriteExpiration::create(['user_id' => $user_id, 'expiration_id' => $expiration->id]);
 

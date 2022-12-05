@@ -92,7 +92,7 @@ class TenderController extends Controller
     {
         DB::beginTransaction();
         try {
-            $tender = Tender::create($request->safe()->except('category_ids') + ['user_id' => auth('api')->id(), 'status' => 'pending']);
+            $tender = Tender::create($request->safe()->except('category_ids') + ['user_id' => auth('api')->id(), 'status' => setting('accepted') != 'automatic' ? 'pending' : 'admin_accept']);
             $tender->categories()->attach($request->validated('category_ids'));
             $admins = User::whereIn('user_type', ['admin', 'superadmin'])->get();
             Notification::send($admins, new TenderNotification($tender->id, 'new_tender', ['database', 'broadcast']));
@@ -184,7 +184,7 @@ class TenderController extends Controller
     public function toggelToFavorite($id)
     {
         $user_id = auth('api')->id();
-        $tender = Tender::findOrFail($id);
+        $tender = Tender::where(['status' => 'admin_accept'])->findOrFail($id);
         $favorite_tender = FavoriteTender::where(['user_id' => $user_id, 'tender_id' => $tender->id])->first();
         $favorite_tender ? $favorite_tender->delete() : FavoriteTender::create(['user_id' => $user_id, 'tender_id' => $tender->id]);
 

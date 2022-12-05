@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\WebSite\Subscription;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Api\Dashboard\Package\PackageResource;
 use App\Http\Resources\Api\WebSite\User\UserResource;
 use App\Models\Package;
 use App\Models\Subscription;
@@ -10,6 +11,12 @@ use Illuminate\Http\Request;
 
 class SubscriptionController extends Controller
 {
+    public function packages()
+    {
+        $packages = Package::all();
+        return PackageResource::collection($packages)->additional(['status' => true, 'message' => '']);
+    }
+
     public function subscrip(Request $request)
     {
         $user = auth('api')->user();

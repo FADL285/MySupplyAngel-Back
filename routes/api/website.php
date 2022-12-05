@@ -121,6 +121,7 @@ Route::namespace('Api\WebSite')->middleware('setLocale')->group(function () {
 
         Route::namespace('Subscription')->group(function () {
             Route::post('subscription', 'SubscriptionController@subscrip');
+            Route::get('packages', 'SubscriptionController@packages')->withoutMiddleware(['auth:api', 'client_middleware']);
         });
     });
 });
