@@ -64,20 +64,25 @@ Route::namespace('Api\Dashboard')->middleware('setLocale')->group(function () {
         Route::namespace('Tender')->group(function () {
             Route::apiResource('tenders', 'TenderController');
             Route::delete('tender/{tender}/medias/{media}', 'TenderController@deleteTenderMedia');
+            Route::patch('tender/{tender}/change-status', 'TenderController@changeStatus');
         });
 
         Route::namespace('Expiration')->group(function () {
             Route::apiResource('expirations', 'ExpirationController');
             Route::delete('expiration/{expiration}/medias/{media}', 'ExpirationController@deleteExpirationMedia');
+            Route::patch('expiration/{expiration}/change-status', 'ExpirationController@changeStatus');
         });
 
         Route::namespace('Agent')->group(function () {
             Route::apiResource('agents', 'AgentController');
             Route::delete('agent/{agent}/medias/{media}', 'AgentController@deleteAgentMedia');
+            Route::patch('agent/{agent}/change-status', 'AgentController@changeStatus');
         });
 
         Route::namespace('Job')->group(function () {
             Route::apiResource('jobs', 'JobController');
+            Route::delete('job/{job}/medias/{media}', 'JobController@deleteJobMedia');
+            Route::patch('job/{job}/change-status', 'JobController@changeStatus');
         });
 
         Route::namespace('Package')->group(function () {

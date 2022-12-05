@@ -24,7 +24,7 @@ class AgentController extends Controller
      */
     public function index(Request $request)
     {
-        $agents = Agent::when($request->type, function ($query) use($request) {
+        $agents = Agent::where(['status' => 'admin_accept'])->when($request->type, function ($query) use($request) {
             $query->where('type', $request->type);
         })->when(! isset($request->type), function ($query) use($request) {
             $query->where('type', 'required_agent_or_distrebutor');
@@ -93,7 +93,7 @@ class AgentController extends Controller
     {
         DB::beginTransaction();
         try {
-            $agent = Agent::create($request->safe()->except('category_ids') + ['user_id' => auth('api')->id(), 'status' => 'pending']);
+            $agent = Agent::create($request->safe()->except('category_ids') + ['user_id' => auth('api')->id(), 'status' => setting('accepted') != 'automatic' ? 'pending' : 'admin_accept']);
             $agent->categories()->attach($request->validated('category_ids'));
             $admins = User::whereIn('user_type', ['admin', 'superadmin'])->get();
             Notification::send($admins, new AgentNotification($agent->id, 'new_agent', ['database', 'broadcast']));
@@ -169,7 +169,7 @@ class AgentController extends Controller
     public function toggelToFavorite($id)
     {
         $user_id = auth('api')->id();
-        $agent = Agent::findOrFail($id);
+        $agent = Agent::where(['status' => 'admin_accept'])->findOrFail($id);
         $agent_favorite = AgentFavorite::where(['user_id' => $user_id, 'agent_id' => $agent->id])->first();
         $agent_favorite ? $agent_favorite->delete() : AgentFavorite::create(['user_id' => $user_id, 'agent_id' => $agent->id]);
 

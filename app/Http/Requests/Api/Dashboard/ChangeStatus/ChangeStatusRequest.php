@@ -15,7 +15,7 @@ class ChangeStatusRequest extends FormRequest
      */
     public function authorize()
     {
-        return false;
+        return true;
     }
 
     /**
@@ -26,7 +26,7 @@ class ChangeStatusRequest extends FormRequest
     public function rules()
     {
         return [
-            'status' => 'required|in:pending,admin_accept,admin_reject'
+            'status' => 'required|in:admin_accept,admin_reject'
         ];
     }
 

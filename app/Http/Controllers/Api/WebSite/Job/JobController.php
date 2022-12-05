@@ -22,7 +22,7 @@ class JobController extends Controller
      */
     public function index(Request $request)
     {
-        $jobs = Job::when($request->country_id, function ($query) use ($request) {
+        $jobs = Job::where(['status' => 'admin_accept'])->when($request->country_id, function ($query) use ($request) {
             $query->where('country_id', $request->country_id);
         })->when($request->city_id, function ($query) use ($request) {
             $query->where('city_id', $request->city_id);
@@ -84,7 +84,7 @@ class JobController extends Controller
      */
     public function store(JobRequest $request)
     {
-        $job = Job::create($request->validated() + ['user_id' => auth('api')->id(), 'status' => 'pending']);
+        $job = Job::create($request->validated() + ['user_id' => auth('api')->id(), 'status' => setting('accepted') != 'automatic' ? 'pending' : 'admin_accept']);
         $admins = User::whereIn('user_type', ['admin', 'superadmin'])->get();
         Notification::send($admins, new JobNotification($job->id, 'new_job', ['database', 'broadcast']));
         return response()->json(['status' => true, 'data' => null, 'message' => trans('website.create.successfully')]);
