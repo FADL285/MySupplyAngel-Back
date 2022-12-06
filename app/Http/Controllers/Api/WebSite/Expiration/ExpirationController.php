@@ -51,14 +51,17 @@ class ExpirationController extends Controller
     {
         $expirations = Expiration::when($request->filter == 'my_expirations', function ($query) {
             $query->where('user_id', auth('api')->id());
-        })->when($request->filter == 'my_offers', function ($query) {
-            $query->whereHas('offers', function ($query) {
-                $query->where('user_id', auth('api')->id());
-            });
-        })->when($request->filter == 'all', function ($query) {
-            $query->where('user_id', auth('api')->id())->orWhereHas('offers', function ($query) {
-                $query->where('user_id', auth('api')->id());
-            });
+        })
+        // ->when($request->filter == 'my_offers', function ($query) {
+        //     $query->whereHas('offers', function ($query) {
+        //         $query->where('user_id', auth('api')->id());
+        //     });
+        // })
+        ->when($request->filter == 'all', function ($query) {
+            $query->where('user_id', auth('api')->id());
+            // ->orWhereHas('offers', function ($query) {
+            //     $query->where('user_id', auth('api')->id());
+            // });
         })->when(! in_array($request->filter, ['my_expirations', 'my_offers', 'all']), function ($query) {
             $query->where('user_id', auth('api')->id());
         })->when($request->keyword, function($query) use($request){
