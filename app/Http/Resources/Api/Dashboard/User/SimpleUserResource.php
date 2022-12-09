@@ -15,6 +15,7 @@ class SimpleUserResource extends JsonResource
     public function toArray($request)
     {
         return [
+            'id'          => (int) $this->id,
             'name'        => (string) $this->name,
             'phone_code'  => (string) $this->phone_code,
             'phone'       => (string) $this->phone,
