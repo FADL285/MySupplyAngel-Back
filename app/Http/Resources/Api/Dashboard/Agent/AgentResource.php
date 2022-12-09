@@ -33,6 +33,7 @@ class AgentResource extends JsonResource
             'expiry_date'    => $this->expiry_date ? $this->expiry_date->format('Y-m-d') : null,
             'is_expired'     => $this->expiry_date ? $this->expiry_date <= now() : false,
             'agent_offers'   => $this->when(auth('api')->check() && $this->user_id == auth('api')->id(), AgentOfferResource::collection($this->offers)),
+            'status'         => (string) $this->status,
             'created_at'     => $this->created_at ? $this->created_at->format('Y-m-d') : null,
         ];
     }

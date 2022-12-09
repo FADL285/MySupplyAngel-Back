@@ -114,7 +114,10 @@ class AgentController extends Controller
     public function show($id)
     {
         $agent = Agent::findOrFail($id);
-        return (new AgentResource($agent))->additional(['status' => true, 'message' => '']);
+        if ($agent->user_id == auth('api')->id() or $agent->status == 'admin_accept') {
+            return (new AgentResource($agent))->additional(['status' => true, 'message' => '']);
+        }
+        return response()->json(['status' => false, 'data' => null, 'message' => 'لم يتم العثور علي بيانات.']);
     }
 
     /**

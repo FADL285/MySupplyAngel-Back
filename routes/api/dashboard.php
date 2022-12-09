@@ -96,5 +96,10 @@ Route::namespace('Api\Dashboard')->middleware('setLocale')->group(function () {
         Route::namespace('MyClient')->group(function () {
             Route::apiResource('my-client', 'MyClientController');
         });
+
+        Route::namespace('Subscription')->group(function () {
+            Route::get('subscriptions', 'SubscriptionController@index');
+            Route::post('subscription/{id}/change-status', 'SubscriptionController@changeStatus');
+        });
     });
 });

@@ -19,9 +19,17 @@ class Tender extends Model
         Tender::observe(TenderObserver::class) ;
     }
 
-    public function setUserIdAttribute()
+    public function setUserIdAttribute($value)
     {
-        $this->attributes['user_id'] = auth('api')->id();
+        if ($value)
+        {
+            $this->attributes['user_id'] = $value;
+        }
+        else
+        {
+
+            $this->attributes['user_id'] = auth('api')->id();
+        }
     }
 
     public function getTenderImagesAttribute()

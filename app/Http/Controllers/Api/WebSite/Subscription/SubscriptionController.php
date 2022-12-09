@@ -36,7 +36,8 @@ class SubscriptionController extends Controller
         {
             Subscription::create([
                 'user_id'    => $user->id,
-                'package_id' => $package->id
+                'package_id' => $package->id,
+                'status'     => 'unpaid',
             ]);
         }
 

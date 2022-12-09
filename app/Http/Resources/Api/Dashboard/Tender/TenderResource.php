@@ -31,6 +31,7 @@ class TenderResource extends JsonResource
             'tender_specifications_value' => (double) $this->tender_specifications_value,
             'tender_specifications_file'  => $this->tender_specifications_file ? new TenderMediaResource($this->tender_specifications_file) : null,
             'tender_offers'               => TenderOfferResource::collection($this->offers),
+            'status'                      => (string) $this->status,
             'created_at'                  => $this->created_at ? $this->created_at->format('Y-m-d') : null,
         ];
     }

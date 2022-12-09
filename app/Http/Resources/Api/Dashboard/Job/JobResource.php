@@ -26,6 +26,7 @@ class JobResource extends JsonResource
             "status"       => (bool) $this->status,
             "city"         => $this->city ? new CityResource($this->city) : null,
             "country"      => $this->country ? new CountryResource($this->country) : null,
+            'status'       => (string) $this->status,
             "created_at"   => $this->created_at ? $this->created_at->format('Y-m-d') : null,
         ];
     }

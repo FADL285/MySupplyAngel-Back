@@ -30,6 +30,7 @@ class ExpirationResource extends JsonResource
             'is_favorite'       => auth('api')->check() && auth('api')->user()->expirationsFavorite()->where('expiration_id', $this->id)->first() ? true : false,
             'expiry_date'       => $this->expiry_date ? $this->expiry_date->format('Y-m-d') : null,
             'is_expired'        => $this->expiry_date ? $this->expiry_date <= now() : false,
+            'status'            => (string) $this->status,
             'created_at'        => $this->created_at ? $this->created_at->format('Y-m-d') : null,
         ];
     }
