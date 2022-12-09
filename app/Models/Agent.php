@@ -19,9 +19,17 @@ class Agent extends Model
         Agent::observe(AgentObserver::class) ;
     }
 
-    public function setUserIdAttribute()
+    public function setUserIdAttribute($value)
     {
-        $this->attributes['user_id'] = auth('api')->id();
+        if ($value)
+        {
+            $this->attributes['user_id'] = $value;
+        }
+        else
+        {
+
+            $this->attributes['user_id'] = auth('api')->id();
+        }
     }
 
     public function getAgentImagesAttribute()

@@ -19,9 +19,17 @@ class Expiration extends Model
         Expiration::observe(ExpirationObserver::class) ;
     }
 
-    public function setUserIdAttribute()
+    public function setUserIdAttribute($value)
     {
-        $this->attributes['user_id'] = auth('api')->id();
+        if ($value)
+        {
+            $this->attributes['user_id'] = $value;
+        }
+        else
+        {
+
+            $this->attributes['user_id'] = auth('api')->id();
+        }
     }
 
     public function getExpirationImagesAttribute()

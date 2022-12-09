@@ -38,6 +38,7 @@ class TenderResource extends JsonResource
             'tender_specifications_value' => (double) $this->tender_specifications_value,
             'tender_specifications_file'  => $this->tender_specifications_file ? new TenderMediaResource($this->tender_specifications_file) : null,
             'my_tender_offer'             => $this->when(auth('api')->check() && $this->user_id != auth('api')->id(), isset($my_offer) ? new TenderOfferResource($my_offer) : null),
+            'status'                      => (string) $this->status,
             'tender_offers'               => $this->when(auth('api')->check() && $this->user_id == auth('api')->id(), TenderOfferResource::collection($this->offers)),
             // 'type'                        => $this->user_id == auth('api')->id() ? 'my_tender' : 'my_offer',
         ];

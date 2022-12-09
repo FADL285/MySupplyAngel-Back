@@ -114,7 +114,10 @@ class TenderController extends Controller
     public function show($id)
     {
         $tender = Tender::findOrFail($id);
-        return (new TenderResource($tender))->additional(['status' => true, 'message' => '']);
+        if ($tender->user_id == auth('api')->id() or $tender->status == 'admin_accept') {
+            return (new TenderResource($tender))->additional(['status' => true, 'message' => '']);
+        }
+        return response()->json(['status' => false, 'data' => null, 'message' => 'لم يتم العثور علي بيانات.']);
     }
 
     /**

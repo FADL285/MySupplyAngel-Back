@@ -29,6 +29,7 @@ class ExpirationResource extends JsonResource
             "expiration_files"  => ExpirationMediaResource::collection($this->expiration_files),
             "expiry_date"       => $this->expiry_date ? $this->expiry_date->format("Y-m-d") : null,
             "is_expired"        => $this->expiry_date ? $this->expiry_date <= now() : false,
+            'status'            => (string) $this->status,
             "created_at"        => $this->created_at ? $this->created_at->format('Y-m-d') : null,
         ];
     }

@@ -114,7 +114,10 @@ class ExpirationController extends Controller
     public function show($id)
     {
         $expiration = Expiration::findOrFail($id);
-        return (new ExpirationResource($expiration))->additional(['status' => true, 'message' => '']);
+        if ($expiration->user_id == auth('api')->id() or $expiration->status == 'admin_accept') {
+            return (new ExpirationResource($expiration))->additional(['status' => true, 'message' => '']);
+        }
+        return response()->json(['status' => false, 'data' => null, 'message' => 'لم يتم العثور علي بيانات.']);
     }
 
     /**
