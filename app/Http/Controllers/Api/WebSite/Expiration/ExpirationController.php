@@ -62,7 +62,7 @@ class ExpirationController extends Controller
             // ->orWhereHas('offers', function ($query) {
             //     $query->where('user_id', auth('api')->id());
             // });
-        })->when(! in_array($request->filter, ['my_expirations', 'my_offers', 'all']), function ($query) {
+        })->when(! in_array($request->filter, ['my_expirations', 'all']), function ($query) {
             $query->where('user_id', auth('api')->id());
         })->when($request->keyword, function($query) use($request){
             $query->where('name', 'LIKE', '%'.$request->keyword.'%')

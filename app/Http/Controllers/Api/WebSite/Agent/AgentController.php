@@ -56,7 +56,7 @@ class AgentController extends Controller
         $agents = Agent::when($request->filter == 'my_agents', function ($query) {
             $query->where('user_id', auth('api')->id());
         })->when($request->filter == 'my_offers', function ($query) {
-            $query->whereHas('offers', function ($query) {
+            $query->where('status', 'admin_accept')->whereHas('offers', function ($query) {
                 $query->where('user_id', auth('api')->id());
             });
         })->when($request->filter == 'all', function ($query) {
