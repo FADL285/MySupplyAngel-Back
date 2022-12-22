@@ -40,7 +40,7 @@ class TenderController extends Controller
                     $query->where('country_id', $request->country_id);
                 });
             });
-        })->latest()->paginate();
+        })->latest()->paginate($request->per_page);
 
         return TenderResource::collection($tenders)->additional(['status' => true, 'message' => null]);
     }
