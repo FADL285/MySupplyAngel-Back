@@ -29,7 +29,7 @@ class AgentController extends Controller
         })->when(! isset($request->type), function ($query) use($request) {
             $query->where('type', 'required_agent_or_distrebutor');
         })->when($request->keyword, function($query) use($request){
-            $query->where('name', 'LIKE', '%'.$request->keyword.'%')
+            $query->where('title', 'LIKE', '%'.$request->keyword.'%')
             ->orWhere('desc', 'LIKE', '%'.$request->keyword.'%');
         })->when($request->category_id, function ($query) use ($request) {
             $query->whereHas('categories', function ($query) use ($request) {
@@ -66,7 +66,7 @@ class AgentController extends Controller
         })->when(! in_array($request->filter, ['my_agents', 'my_offers', 'all']), function ($query) {
             $query->where('user_id', auth('api')->id());
         })->when($request->keyword, function($query) use($request){
-            $query->where('name', 'LIKE', '%'.$request->keyword.'%')
+            $query->where('title', 'LIKE', '%'.$request->keyword.'%')
             ->orWhere('desc', 'LIKE', '%'.$request->keyword.'%');
         })->when($request->category_id, function ($query) use ($request) {
             $query->whereHas('categories', function ($query) use ($request) {
@@ -183,7 +183,7 @@ class AgentController extends Controller
     {
         $agents_favorite = auth('api')->user()->agentFavorites()
         ->when($request->keyword, function($query) use($request){
-            $query->where('name', 'LIKE', '%'.$request->keyword.'%')
+            $query->where('title', 'LIKE', '%'.$request->keyword.'%')
             ->orWhere('desc', 'LIKE', '%'.$request->keyword.'%');
         })->when($request->category_id, function ($query) use ($request) {
             $query->whereHas('categories', function ($query) use ($request) {

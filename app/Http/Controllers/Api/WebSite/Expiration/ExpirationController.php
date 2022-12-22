@@ -25,7 +25,7 @@ class ExpirationController extends Controller
     public function index(Request $request)
     {
         $expirations = Expiration::where(['status' => 'admin_accept'])->when($request->keyword, function($query) use($request){
-            $query->where('name', 'LIKE', '%'.$request->keyword.'%')
+            $query->where('title', 'LIKE', '%'.$request->keyword.'%')
             ->orWhere('desc', 'LIKE', '%'.$request->keyword.'%');
         })->when($request->category_id, function ($query) use ($request) {
             $query->whereHas('categories', function ($query) use ($request) {
@@ -65,7 +65,7 @@ class ExpirationController extends Controller
         })->when(! in_array($request->filter, ['my_expirations', 'all']), function ($query) {
             $query->where('user_id', auth('api')->id());
         })->when($request->keyword, function($query) use($request){
-            $query->where('name', 'LIKE', '%'.$request->keyword.'%')
+            $query->where('title', 'LIKE', '%'.$request->keyword.'%')
             ->orWhere('desc', 'LIKE', '%'.$request->keyword.'%');
         })->when($request->category_id, function ($query) use ($request) {
             $query->whereHas('categories', function ($query) use ($request) {
@@ -183,7 +183,7 @@ class ExpirationController extends Controller
     {
         $favorite_expirations = auth('api')->user()->expirationsFavorite()
         ->when($request->keyword, function($query) use($request){
-            $query->where('name', 'LIKE', '%'.$request->keyword.'%')
+            $query->where('title', 'LIKE', '%'.$request->keyword.'%')
             ->orWhere('desc', 'LIKE', '%'.$request->keyword.'%');
         })->when($request->category_id, function ($query) use ($request) {
             $query->whereHas('categories', function ($query) use ($request) {

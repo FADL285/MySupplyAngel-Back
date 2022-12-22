@@ -28,7 +28,7 @@ class TenderController extends Controller
         $tenders = Tender::where('status', 'admin_accept')
         // ->where('expiry_date', '>', now())
         ->when($request->keyword, function($query) use($request){
-            $query->where('name', 'LIKE', '%'.$request->keyword.'%')
+            $query->where('title', 'LIKE', '%'.$request->keyword.'%')
             ->orWhere('desc', 'LIKE', '%'.$request->keyword.'%');
         })->when($request->category_id, function ($query) use ($request) {
             $query->whereHas('categories', function ($query) use ($request) {
@@ -65,7 +65,7 @@ class TenderController extends Controller
         })->when(! in_array($request->filter, ['my_tenders', 'my_offers', 'all']), function ($query) {
             $query->where('user_id', auth('api')->id());
         })->when($request->keyword, function($query) use($request){
-            $query->where('name', 'LIKE', '%'.$request->keyword.'%')
+            $query->where('title', 'LIKE', '%'.$request->keyword.'%')
             ->orWhere('desc', 'LIKE', '%'.$request->keyword.'%');
         })->when($request->category_id, function ($query) use ($request) {
             $query->whereHas('categories', function ($query) use ($request) {
@@ -198,7 +198,7 @@ class TenderController extends Controller
     {
         $favorite_tenders = auth('api')->user()->tendersFavorite()
         ->when($request->keyword, function($query) use($request){
-            $query->where('name', 'LIKE', '%'.$request->keyword.'%')
+            $query->where('title', 'LIKE', '%'.$request->keyword.'%')
             ->orWhere('desc', 'LIKE', '%'.$request->keyword.'%');
         })->when($request->category_id, function ($query) use ($request) {
             $query->whereHas('categories', function ($query) use ($request) {
