@@ -4,6 +4,7 @@ namespace App\Http\Resources\Api\WebSite\Job;
 
 use App\Http\Resources\Api\WebSite\City\CityResource;
 use App\Http\Resources\Api\WebSite\Country\CountryResource;
+use App\Http\Resources\Api\WebSite\User\SimpleUserResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class JobResource extends JsonResource
@@ -23,6 +24,8 @@ class JobResource extends JsonResource
             "desc"         => (string) $this->desc,
             "city"         => $this->city ? new CityResource($this->city) : null,
             "country"      => $this->country ? new CountryResource($this->country) : null,
+            "i_applied"    => auth('api')->check() && $this->user_id != auth('api')->id() && in_array(auth('api')->id(), $this->users()->pluck('user_id')->toArray()) ? true : false,
+            "job_applications" => auth('api')->check() && $this->user_id == auth('api')->id() ? SimpleUserResource::collection($this->users) : [],
         ];
     }
 }
