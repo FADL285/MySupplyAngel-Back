@@ -40,7 +40,9 @@ class TenderResource extends JsonResource
             'my_tender_offer'             => auth('api')->check() && $this->user_id != auth('api')->id() && isset($my_offer) ? new TenderOfferResource($my_offer) : null,
             'status'                      => (string) $this->status,
             'tender_offers'               => auth('api')->check() && $this->user_id == auth('api')->id() ? TenderOfferResource::collection($this->offers) : [],
-            // 'type'                        => $this->user_id == auth('api')->id() ? 'my_tender' : 'my_offer',
+
+            'added_offer'                 => (bool) isset($my_offer),
+            'is_my_agent'                 => auth('api')->check() && $this->user_id == auth('api')->id() ? true : false ,
         ];
     }
 }

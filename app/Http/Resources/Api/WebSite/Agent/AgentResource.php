@@ -41,6 +41,8 @@ class AgentResource extends JsonResource
             'my_agent_offer' => auth('api')->check() && $this->user_id != auth('api')->id() && isset($my_offer) ? new AgentOfferResource($my_offer) : null,
             'agent_offers'   => auth('api')->check() && $this->user_id == auth('api')->id() ? AgentOfferResource::collection($this->offers) : [],
             'status'         => (string) $this->status,
+            'added_offer'    => (bool) isset($my_offer),
+            'is_my_agent'    => auth('api')->check() && $this->user_id == auth('api')->id() ? true : false ,
             'created_at'     => $this->created_at ? $this->created_at->format('Y-m-d') : null,
         ];
     }
