@@ -11,6 +11,12 @@ class ContactController extends Controller
     public function getContact()
     {
         $data = [
+            'address'   => (string) setting('address'),
+            'location'  => [
+                'lat' => (double) setting('lat'),
+                'lng' => (double) setting('lng'),
+                'description_location' => (string) setting('description_location'),
+            ],
             'messenger' => (string) setting('messenger'),
             'whatsapp'  => (string) setting('whatsapp'),
             'social'    => [
